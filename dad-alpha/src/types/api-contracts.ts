@@ -1,11 +1,17 @@
 /**
  * API Contract Types — Dad.alpha
  *
- * Shared with Mom.alpha — both frontends hit the same backend.
- * This file is the single source of truth for all request/response shapes.
+ * This file is the single source of truth for all request/response shapes
+ * between the Next.js frontend and the FastAPI backend.
+ *
+ * Keep in sync with mom-alpha/src/types/api-contracts.ts — both frontends
+ * hit the same backend. Changes here must be coordinated across both.
  */
 
+// =============================================================================
 // Common Types
+// =============================================================================
+
 export type AgentType =
   | "calendar_whiz"
   | "grocery_guru"
@@ -32,13 +38,21 @@ export type IntentType =
   | "intelligent";
 
 export type TaskStatus = "pending" | "in_progress" | "completed" | "failed";
-export type ConsentDocumentType = "terms_of_service" | "privacy_policy" | "ai_disclosure";
+
+export type ConsentDocumentType =
+  | "terms_of_service"
+  | "privacy_policy"
+  | "ai_disclosure";
+
 export type CalendarSource = "internal" | "google" | "apple" | "school";
 
-// Auth
+// =============================================================================
+// Auth — JWT Claims
+// =============================================================================
+
 export interface JWTClaims {
-  sub: string;
-  household_id: string;
+  sub: string; // user_id (UUID)
+  household_id: string; // household UUID
   tier: SubscriptionTier;
   email: string;
   name: string;
@@ -46,8 +60,18 @@ export interface JWTClaims {
   exp: number;
 }
 
-export interface AuthGoogleRequest { id_token: string; }
-export interface AuthEmailRequest { email: string; password: string; }
+// =============================================================================
+// Auth — Login / Signup
+// =============================================================================
+
+export interface AuthGoogleRequest {
+  id_token: string; // Google OAuth ID token
+}
+
+export interface AuthEmailRequest {
+  email: string;
+  password: string;
+}
 
 export interface AuthResponse {
   access_token: string;
@@ -56,24 +80,32 @@ export interface AuthResponse {
     id: string;
     email: string;
     name: string;
-    household_id: string | null;
+    household_id: string | null; // null if first login (needs onboarding)
     tier: SubscriptionTier;
-    consent_current: boolean;
+    consent_current: boolean; // true if all consents are up-to-date
     parent_brand?: ParentBrand;
     household_role?: HouseholdRole | null;
     household_membership_status?: HouseholdMembershipStatus;
   };
 }
 
-// Consent
+// =============================================================================
+// Consent API — POST /api/consent
+// =============================================================================
+
 export interface ConsentRequest {
   consents: Array<{
     document_type: ConsentDocumentType;
     document_version: string;
-    document_hash: string;
+    document_hash: string; // SHA-256 of document content
   }>;
 }
-export interface ConsentResponse { recorded: number; all_accepted: boolean; }
+
+export interface ConsentResponse {
+  recorded: number; // number of consent records created
+  all_accepted: boolean;
+}
+
 export interface ConsentStatusResponse {
   documents: Array<{
     document_type: ConsentDocumentType;
@@ -83,49 +115,60 @@ export interface ConsentStatusResponse {
   }>;
 }
 
-// Chat
+// =============================================================================
+// Chat API — POST /api/chat
+// =============================================================================
+
 export interface ChatRequest {
   household_id: string;
   agent_type: AgentType;
   message: string;
   media_urls?: string[];
 }
+
 export interface ChatResponse {
   message_id: string;
   agent_type: AgentType;
   content: string;
   intent_type: IntentType;
-  model_used: string | null;
+  model_used: string | null; // null for deterministic ops
   tokens_used: number | null;
   quick_actions?: QuickAction[];
-  task_id?: string;
+  task_id?: string; // if a background task was created
 }
+
 export interface QuickAction {
   label: string;
-  action: string;
+  action: string; // e.g., "add_to_list", "create_event", "scan_receipt"
   payload?: Record<string, unknown>;
 }
 
-// Budget
+// =============================================================================
+// Budget API — GET /api/budget/{household_id}
+// =============================================================================
+
 export interface BudgetResponse {
   household_id: string;
   used: number;
   limit: number;
   remaining: number;
-  period_start: string;
+  period_start: string; // ISO date
   period_end: string;
   is_over_budget: boolean;
   tier: SubscriptionTier;
 }
 
-// Calendar
+// =============================================================================
+// Calendar API — /api/calendar
+// =============================================================================
+
 export interface CalendarEvent {
   id: string;
   household_id: string;
   member_id: string | null;
   title: string;
   description: string | null;
-  start_at: string;
+  start_at: string; // ISO datetime
   end_at: string;
   all_day: boolean;
   source: CalendarSource;
@@ -134,6 +177,7 @@ export interface CalendarEvent {
   member_color: string | null;
   metadata: Record<string, unknown>;
 }
+
 export interface CalendarEventCreateRequest {
   title: string;
   description?: string;
@@ -142,6 +186,7 @@ export interface CalendarEventCreateRequest {
   all_day?: boolean;
   member_id?: string;
 }
+
 export interface CalendarEventUpdateRequest {
   title?: string;
   description?: string;
@@ -150,24 +195,42 @@ export interface CalendarEventUpdateRequest {
   all_day?: boolean;
   member_id?: string;
 }
-export interface CalendarEventsResponse { events: CalendarEvent[]; total: number; }
 
-// Agent Marketplace
+export interface CalendarEventsResponse {
+  events: CalendarEvent[];
+  total: number;
+}
+
+// =============================================================================
+// Agent Marketplace — GET /api/agents
+// =============================================================================
+
 export interface AgentCard {
   agent_type: AgentType;
   name: string;
   description: string;
   category: string;
-  icon: string;
+  icon: string; // Material Symbols icon name
   is_active: boolean;
-  is_available: boolean;
+  is_available: boolean; // false if tier doesn't include it
   required_tier: SubscriptionTier;
   capabilities: string[];
+  starter_prompts: string[];
 }
-export interface AgentToggleRequest { agent_type: AgentType; is_active: boolean; }
-export interface AgentListResponse { agents: AgentCard[]; }
 
-// Tasks
+export interface AgentToggleRequest {
+  agent_type: AgentType;
+  is_active: boolean;
+}
+
+export interface AgentListResponse {
+  agents: AgentCard[];
+}
+
+// =============================================================================
+// Tasks API — GET /api/tasks
+// =============================================================================
+
 export interface TaskItem {
   id: string;
   household_id: string;
@@ -179,10 +242,22 @@ export interface TaskItem {
   created_at: string;
   updated_at: string;
 }
-export interface TaskStep { label: string; status: "pending" | "in_progress" | "completed"; }
-export interface TaskListResponse { tasks: TaskItem[]; active_count: number; completed_today: number; }
 
-// Household
+export interface TaskStep {
+  label: string;
+  status: "pending" | "in_progress" | "completed";
+}
+
+export interface TaskListResponse {
+  tasks: TaskItem[];
+  active_count: number;
+  completed_today: number;
+}
+
+// =============================================================================
+// Household / Family API
+// =============================================================================
+
 export interface Household {
   id: string;
   name: string;
@@ -190,6 +265,7 @@ export interface Household {
   trial_expires_at: string | null;
   members: FamilyMember[];
 }
+
 export interface FamilyMember {
   id: string;
   name: string;
@@ -202,22 +278,34 @@ export interface FamilyMember {
   household_role?: HouseholdRole | null;
   operator_id?: string | null;
 }
+
 export interface HouseholdCreateRequest {
   name: string;
-  members: Array<{ name: string; age?: number; tags?: string[]; color?: string; }>;
+  members: Array<{
+    name: string;
+    age?: number;
+    tags?: string[];
+    color?: string;
+  }>;
 }
+
 export interface HouseholdInviteRequest {
   email: string;
   parent_brand?: ParentBrand;
   role?: Exclude<HouseholdRole, "admin">;
 }
+
 export interface HouseholdInviteResponse {
   household_id: string;
   invite_token: string;
   expires_at: string;
   invited_email: string;
 }
-export interface JoinHouseholdRequest { invite_token: string; }
+
+export interface JoinHouseholdRequest {
+  invite_token: string;
+}
+
 export interface HouseholdMember {
   operator_id: string;
   name: string;
@@ -226,7 +314,12 @@ export interface HouseholdMember {
   parent_brand?: ParentBrand | null;
   membership_status: HouseholdMembershipStatus;
 }
-export interface HouseholdMembersResponse { household_id: string; members: HouseholdMember[]; }
+
+export interface HouseholdMembersResponse {
+  household_id: string;
+  members: HouseholdMember[];
+}
+
 export interface SyncDigestItem {
   id: string;
   category: "calendar" | "tasks" | "expenses" | "school" | "general" | "household_ops";
@@ -235,14 +328,16 @@ export interface SyncDigestItem {
   ops_type?: "garage" | "home" | "trip" | "routine";
   created_at: string;
 }
+
 export interface SyncDigestResponse {
   household_id: string;
   generated_at: string;
   items: SyncDigestItem[];
 }
+
 export interface HouseholdUsageDashboard {
   household_id: string;
-  period: string;
+  period: string; // e.g. "2026-03"
   calls_used: number;
   calls_limit: number;
   usage_pct: number;
@@ -252,16 +347,20 @@ export interface HouseholdUsageDashboard {
   by_model: Record<string, number>;
 }
 
-// Expenses
+// =============================================================================
+// Expenses API — GET /api/expenses/{household_id}
+// =============================================================================
+
 export interface Expense {
   id: string;
   amount: number;
   category: string;
   merchant: string | null;
-  date: string;
+  date: string; // ISO date
   receipt_url: string | null;
   source: "manual" | "ocr" | "recurring";
 }
+
 export interface ExpenseSummary {
   total_month: number;
   by_category: Record<string, number>;
@@ -269,7 +368,10 @@ export interface ExpenseSummary {
   trend: "up" | "down" | "stable";
 }
 
-// Notifications
+// =============================================================================
+// Notifications API
+// =============================================================================
+
 export interface NotificationItem {
   id: string;
   category: string;
@@ -280,13 +382,35 @@ export interface NotificationItem {
   read_at: string | null;
   created_at: string;
 }
-export interface NotificationsResponse { notifications: NotificationItem[]; unread_count: number; }
 
-// Lists
-export interface ListItem { id: string; text: string; checked: boolean; added_at: string; }
-export interface GroceryList { id: string; name: string; items: ListItem[]; agent_type: AgentType; updated_at: string; }
+export interface NotificationsResponse {
+  notifications: NotificationItem[];
+  unread_count: number;
+}
 
-// Permission Slips
+// =============================================================================
+// Lists API
+// =============================================================================
+
+export interface ListItem {
+  id: string;
+  text: string;
+  checked: boolean;
+  added_at: string;
+}
+
+export interface GroceryList {
+  id: string;
+  name: string;
+  items: ListItem[];
+  agent_type: AgentType;
+  updated_at: string;
+}
+
+// =============================================================================
+// Permission Slips API
+// =============================================================================
+
 export interface PermissionSlip {
   id: string;
   title: string;
@@ -297,7 +421,10 @@ export interface PermissionSlip {
   signed_at: string | null;
 }
 
-// Wellness
+// =============================================================================
+// Wellness Streaks API
+// =============================================================================
+
 export interface WellnessStreak {
   id: string;
   member_id: string | null;
@@ -305,22 +432,26 @@ export interface WellnessStreak {
   streak_type: string;
   current_streak: number;
   longest_streak: number;
-  dates: string[];
+  dates: string[]; // ISO dates
 }
 
-// Sleep
+// =============================================================================
+// Sleep Tracker API
+// =============================================================================
+
 export interface SleepEntry {
   id: string;
   household_id: string;
   member_id: string | null;
   member_name: string | null;
-  sleep_at: string;
-  wake_at: string;
+  sleep_at: string; // ISO datetime (bedtime)
+  wake_at: string; // ISO datetime (wake time)
   quality: "great" | "good" | "fair" | "poor";
   notes: string | null;
   duration_hours: number;
   created_at: string;
 }
+
 export interface SleepLogRequest {
   member_id?: string;
   sleep_at: string;
@@ -328,27 +459,32 @@ export interface SleepLogRequest {
   quality: "great" | "good" | "fair" | "poor";
   notes?: string;
 }
+
 export interface SleepHistoryResponse {
   entries: SleepEntry[];
   avg_duration_hours: number;
-  avg_quality_score: number;
-  weekly_pattern: Record<string, number>;
+  avg_quality_score: number; // 1-4 (poor-great)
+  weekly_pattern: Record<string, number>; // day-of-week → avg hours
 }
 
-// Self-Care
+// =============================================================================
+// Self-Care Reminder API
+// =============================================================================
+
 export interface SelfCareReminder {
   id: string;
   household_id: string;
   title: string;
   description: string | null;
   category: "relaxation" | "exercise" | "social" | "hobby" | "rest" | "custom";
-  remind_at: string;
+  remind_at: string; // ISO datetime
   recurring: boolean;
-  recurrence_days: number[] | null;
+  recurrence_days: number[] | null; // 0=Sun, 1=Mon, ..., 6=Sat
   snoozed_until: string | null;
   completed_at: string | null;
   created_at: string;
 }
+
 export interface SelfCareCreateRequest {
   title: string;
   description?: string;
@@ -357,50 +493,64 @@ export interface SelfCareCreateRequest {
   recurring?: boolean;
   recurrence_days?: number[];
 }
+
 export interface SelfCareListResponse {
   reminders: SelfCareReminder[];
   completed_today: number;
-  streak_days: number;
+  streak_days: number; // consecutive days with at least 1 self-care activity
 }
 
-// Analytics
+// =============================================================================
+// Analytics Dashboard (Family Pro)
+// =============================================================================
+
 export interface AnalyticsDashboard {
-  period: string;
-  agent_usage: Record<AgentType, number>;
+  period: string; // "2026-03"
+  agent_usage: Record<AgentType, number>; // agent → chat count
   spending_trend: Array<{ date: string; amount: number }>;
   schedule_density: Array<{ date: string; events: number }>;
   top_categories: Array<{ category: string; count: number }>;
   call_budget_usage_pct: number;
 }
 
-// WebSocket
-export type WSMessageType = "task_update" | "notification" | "budget_change" | "agent_status" | "typing";
+// =============================================================================
+// WebSocket Protocol
+// =============================================================================
+
+export type WSMessageType =
+  | "task_update"
+  | "notification"
+  | "budget_change"
+  | "agent_status"
+  | "typing";
+
 export interface WSMessage {
   type: WSMessageType;
   payload: Record<string, unknown>;
-  timestamp: string;
+  timestamp: string; // ISO datetime
 }
 
-// Stripe
+// =============================================================================
+// Stripe / Checkout API
+// =============================================================================
+
 export interface CheckoutTrialRequest {
   tier: "family" | "family_pro";
   billing_cycle?: "monthly" | "yearly";
   success_url: string;
   cancel_url: string;
-  promotion_code?: string;
-}
-export interface CheckoutTrialResponse { checkout_url: string; session_id: string; }
-
-// LLM Cost
-export interface LLMCostReport {
-  period: string;
-  total_cost: number;
-  by_model: Record<string, { calls: number; tokens: number; cost: number }>;
-  distribution: { gemini_flash_pct: number; gpt4o_mini_pct: number; gpt4o_pct: number; };
-  alert: boolean;
+  promotion_code?: string; // Optional beta invite / promo code
 }
 
-// Dad.AI specific — Checklists
+export interface CheckoutTrialResponse {
+  checkout_url: string; // Stripe Checkout hosted page URL
+  session_id: string;
+}
+
+// =============================================================================
+// Checklists API
+// =============================================================================
+
 export interface ChecklistItem {
   id: string;
   text: string;
@@ -417,7 +567,10 @@ export interface Checklist {
   updated_at: string;
 }
 
-// Dad.AI specific — Weekly Plan
+// =============================================================================
+// Weekly Plan API
+// =============================================================================
+
 export interface WeeklyPlanDay {
   date: string;
   events: Array<{ time: string; title: string; who: string }>;
@@ -430,7 +583,10 @@ export interface WeeklyPlan {
   generated_at: string;
 }
 
-// Dad.AI specific — Calendar Conflict
+// =============================================================================
+// Calendar Conflicts API
+// =============================================================================
+
 export interface CalendarConflict {
   id: string;
   event_a: { title: string; time: string; parent: string };
@@ -439,7 +595,10 @@ export interface CalendarConflict {
   severity: "overlap" | "tight" | "logistics";
 }
 
-// Household Ops — Vehicle Garage
+// =============================================================================
+// Household Ops — Vehicles
+// =============================================================================
+
 export interface Vehicle {
   id: string;
   household_id: string;
@@ -453,6 +612,7 @@ export interface Vehicle {
   created_at: string;
   updated_at: string;
 }
+
 export interface VehicleCreateRequest {
   nickname: string;
   make?: string;
@@ -462,6 +622,7 @@ export interface VehicleCreateRequest {
   current_mileage?: number;
   notes?: string;
 }
+
 export interface VehicleServiceItem {
   id: string;
   vehicle_id: string;
@@ -473,6 +634,7 @@ export interface VehicleServiceItem {
   notes: string | null;
   created_at: string;
 }
+
 export interface VehicleServiceItemCreateRequest {
   service_type: string;
   last_performed_at?: string;
@@ -482,9 +644,13 @@ export interface VehicleServiceItemCreateRequest {
   notes?: string;
 }
 
+// =============================================================================
 // Household Ops — Home Projects
+// =============================================================================
+
 export type HomeProjectStatus = "planned" | "in_progress" | "completed" | "on_hold";
 export type HomeProjectArea = "interior" | "exterior" | "yard" | "other";
+
 export interface HomeProject {
   id: string;
   household_id: string;
@@ -497,6 +663,7 @@ export interface HomeProject {
   created_at: string;
   updated_at: string;
 }
+
 export interface HomeProjectCreateRequest {
   title: string;
   description?: string;
@@ -505,8 +672,12 @@ export interface HomeProjectCreateRequest {
   area?: HomeProjectArea;
 }
 
-// Household Ops — Trip Planning
+// =============================================================================
+// Household Ops — Trips
+// =============================================================================
+
 export type TripStatus = "planning" | "booked" | "completed" | "cancelled";
+
 export interface TripPlan {
   id: string;
   household_id: string;
@@ -520,6 +691,7 @@ export interface TripPlan {
   created_at: string;
   updated_at: string;
 }
+
 export interface TripPlanCreateRequest {
   destination: string;
   start_date?: string;
@@ -528,8 +700,12 @@ export interface TripPlanCreateRequest {
   notes?: string;
 }
 
+// =============================================================================
 // Household Ops — Automation Routines
+// =============================================================================
+
 export type RoutineTriggerType = "time" | "checklist" | "reminder";
+
 export interface RoutineStep {
   id: string;
   label: string;
@@ -537,6 +713,7 @@ export interface RoutineStep {
   trigger_value: string | null;
   order: number;
 }
+
 export interface AutomationRoutine {
   id: string;
   household_id: string;
@@ -546,6 +723,7 @@ export interface AutomationRoutine {
   created_at: string;
   updated_at: string;
 }
+
 export interface AutomationRoutineCreateRequest {
   name: string;
   steps?: Array<{
@@ -556,10 +734,29 @@ export interface AutomationRoutineCreateRequest {
   }>;
 }
 
-// Household Ops — Google Calendar connection status
+// =============================================================================
+// Google Calendar Integration
+// =============================================================================
+
 export interface GoogleCalendarConnectionStatus {
   connected: boolean;
   email: string | null;
   scopes: string[];
   connected_at: string | null;
+}
+
+// =============================================================================
+// LLM Cost Monitoring (Admin)
+// =============================================================================
+
+export interface LLMCostReport {
+  period: string;
+  total_cost: number;
+  by_model: Record<string, { calls: number; tokens: number; cost: number }>;
+  distribution: {
+    gemini_flash_pct: number;
+    gpt4o_mini_pct: number;
+    gpt4o_pct: number;
+  };
+  alert: boolean; // true if spend > 2x rolling average
 }
