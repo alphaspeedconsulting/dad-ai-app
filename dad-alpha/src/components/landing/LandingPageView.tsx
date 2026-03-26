@@ -19,7 +19,7 @@ export function LandingPageView() {
       <FaqJsonLd />
       <div className="min-h-screen bg-background pb-20 md:pb-0">
         <MarketingNav />
-        <main>
+        <main id="main-content">
           <MarketingHero />
           <ProductShowcase />
           <AgentGrid />
