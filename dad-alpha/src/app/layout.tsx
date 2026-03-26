@@ -49,13 +49,13 @@ export const metadata: Metadata = {
     description:
       "Your AI co-pilot for family logistics. Stay in sync, stay ahead.",
     url: siteUrl,
-    images: [{ url: "/icons/icon-512.png", width: 512, height: 512, alt: "Alpha.Dad" }],
+    images: [{ url: "/brand/og-image.jpg", width: 1200, height: 630, alt: "Alpha.Dad — AI Family Co-Pilot" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Alpha.Dad — AI Family Co-Pilot",
     description: "Your AI co-pilot for family logistics. Stay in sync, stay ahead.",
-    images: ["/icons/icon-512.png"],
+    images: ["/brand/og-image.jpg"],
   },
   robots: { index: true, follow: true },
 };
@@ -63,7 +63,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#1e40af",
+  themeColor: "#00CCFF",
 };
 
 export default function RootLayout({
@@ -76,6 +76,9 @@ export default function RootLayout({
     >
       <head>
         <link rel="manifest" href="/manifest.json" />
+        <link rel="icon" href="/brand/favicon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/icons/icon-192.png" sizes="192x192" type="image/png" />
+        <link rel="apple-touch-icon" href="/icons/icon-512.png" />
         <link
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
           rel="stylesheet"

@@ -13,7 +13,19 @@ export function MarketingFooter() {
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-8 sm:flex-row sm:justify-between">
         <div className="text-center sm:text-left">
           <p className="font-headline text-alphaai-lg font-bold text-foreground">Alpha.Dad</p>
-          <p className="mt-1 text-alphaai-xs text-muted-foreground">Powered by AlphaSpeed AI</p>
+          <a
+            href="https://alphaspeedai.com"
+            rel="noopener noreferrer"
+            className="mt-2 inline-flex items-center gap-2 opacity-60 transition-opacity hover:opacity-100"
+            aria-label="Powered by AlphaSpeed AI"
+          >
+            <img
+              src="/brand/alphaspeedai-logo.png"
+              alt="AlphaSpeed AI"
+              className="h-5 w-auto"
+              style={{ filter: "brightness(0) invert(1)" }}
+            />
+          </a>
         </div>
         <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2" aria-label="Legal">
           {FOOTER_LINKS.map((link) => (

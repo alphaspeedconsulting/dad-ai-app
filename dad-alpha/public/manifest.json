@@ -1,11 +1,11 @@
 {
-  "name": "Dad.alpha — AI Family Assistant",
-  "short_name": "Dad.alpha",
+  "name": "Alpha.Dad — AI Family Co-Pilot",
+  "short_name": "Alpha.Dad",
   "description": "Your AI co-pilot for family logistics, schedules, and staying in sync",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f0f5ff",
-  "theme_color": "#1e40af",
+  "background_color": "#090B14",
+  "theme_color": "#00CCFF",
   "orientation": "portrait-primary",
   "icons": [
     {
