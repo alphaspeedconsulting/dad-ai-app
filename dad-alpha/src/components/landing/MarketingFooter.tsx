@@ -16,14 +16,14 @@ export function MarketingFooter() {
           <a
             href="https://alphaspeedai.com"
             rel="noopener noreferrer"
-            className="mt-2 inline-flex items-center gap-2 opacity-60 transition-opacity hover:opacity-100"
+            className="mt-2 inline-flex items-center gap-1.5 opacity-70 transition-opacity hover:opacity-100"
             aria-label="Powered by AlphaSpeed AI"
           >
+            <span className="text-alphaai-3xs text-muted-foreground">Powered by</span>
             <img
               src="/brand/alphaspeedai-logo.png"
               alt="AlphaSpeed AI"
-              className="h-5 w-auto"
-              style={{ filter: "brightness(0) invert(1)" }}
+              className="h-8 w-auto"
             />
           </a>
         </div>
