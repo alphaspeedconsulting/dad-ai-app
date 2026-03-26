@@ -16,7 +16,10 @@ const beVietnamPro = Be_Vietnam_Pro({
   display: "swap",
 });
 
+const siteUrl = "https://dad.alphaspeedai.com";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
     default: "Dad.alpha — AI Family Co-Pilot",
     template: "%s | Dad.alpha",
@@ -34,6 +37,9 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "AlphaSpeed AI" }],
   creator: "AlphaSpeed AI",
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -41,12 +47,14 @@ export const metadata: Metadata = {
     title: "Dad.alpha — AI Family Co-Pilot",
     description:
       "Your AI co-pilot for family logistics. Stay in sync, stay ahead.",
-    url: "https://dad.alphaspeedai.com",
+    url: siteUrl,
+    images: [{ url: "/icons/icon-512.png", width: 512, height: 512, alt: "Dad.alpha" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Dad.alpha — AI Family Co-Pilot",
     description: "Your AI co-pilot for family logistics. Stay in sync, stay ahead.",
+    images: ["/icons/icon-512.png"],
   },
   robots: { index: true, follow: true },
 };

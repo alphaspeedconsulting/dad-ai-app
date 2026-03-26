@@ -1,44 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { AgentType } from "@/types/api-contracts";
-
-const DAD_AGENTS: Array<{
-  agent_type: AgentType;
-  name: string;
-  description: string;
-  icon: string;
-  capabilities: string[];
-}> = [
-  {
-    agent_type: "calendar_whiz",
-    name: "Schedule Sync",
-    description: "Manages family schedules, detects conflicts between parent calendars, and syncs events.",
-    icon: "calendar_month",
-    capabilities: ["Conflict detection", "Calendar sync", "Smart rescheduling"],
-  },
-  {
-    agent_type: "school_event_hub",
-    name: "School Hub",
-    description: "Scans school emails, tracks permission slips, and manages school events and deadlines.",
-    icon: "school",
-    capabilities: ["Email scanning", "Permission slips", "Event tracking"],
-  },
-  {
-    agent_type: "budget_buddy",
-    name: "Expense Tracker",
-    description: "Tracks family spending, categorizes expenses, and finds savings opportunities.",
-    icon: "account_balance_wallet",
-    capabilities: ["Receipt scanning", "Expense tracking", "Budget alerts"],
-  },
-  {
-    agent_type: "grocery_guru",
-    name: "Grocery Planner",
-    description: "Builds grocery lists, plans meals, and suggests recipes for the family.",
-    icon: "shopping_cart",
-    capabilities: ["Grocery lists", "Meal planning", "Recipe suggestions"],
-  },
-];
+import { DAD_AGENTS } from "@/config/dad-agents";
 
 export default function AgentsPage() {
   return (

@@ -1,15 +1,9 @@
 import { AgentChatClient } from "@/components/chat/AgentChatClient";
+import { DAD_MVP_AGENT_TYPES } from "@/config/dad-agents";
 import type { AgentType } from "@/types/api-contracts";
 
-const DAD_AGENTS: AgentType[] = [
-  "calendar_whiz",
-  "school_event_hub",
-  "budget_buddy",
-  "grocery_guru",
-];
-
 export function generateStaticParams() {
-  return DAD_AGENTS.map((agent) => ({ agent }));
+  return DAD_MVP_AGENT_TYPES.map((agent) => ({ agent }));
 }
 
 export default async function ChatPage({ params }: { params: Promise<{ agent: string }> }) {
