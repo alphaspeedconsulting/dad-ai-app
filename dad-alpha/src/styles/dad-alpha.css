@@ -1,0 +1,257 @@
+/* ==========================================================================
+   Layer 3: Shared Component Classes — "Steady & Strong"
+   ==========================================================================
+   All classes reference CSS variables only — zero hardcoded values.
+   ========================================================================== */
+
+/* Glass panel */
+.dad-glass-panel {
+  background: hsl(var(--background) / 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: var(--radius-default);
+}
+
+/* Card */
+.dad-card {
+  background: hsl(var(--surface));
+  border-radius: var(--radius-default);
+  box-shadow: 0 8px 24px hsl(var(--shadow-tint));
+}
+
+/* Elevated card */
+.dad-card-elevated {
+  background: hsl(var(--surface-elevated));
+  border-radius: var(--radius-default);
+  box-shadow: 0 12px 32px hsl(var(--shadow-tint));
+}
+
+/* Chip */
+.dad-chip {
+  background: hsl(var(--tertiary-container));
+  color: hsl(var(--tertiary));
+  border-radius: 9999px;
+  padding: 0.35rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.dad-chip-secondary {
+  background: hsl(var(--secondary-container));
+  color: hsl(var(--secondary));
+  border-radius: 9999px;
+  padding: 0.25rem 0.625rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Gradient hero */
+.dad-gradient-hero {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--brand)),
+    hsl(var(--brand-glow))
+  );
+}
+
+/* Primary button */
+.dad-btn-primary {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--brand)),
+    hsl(var(--brand-glow))
+  );
+  color: hsl(var(--on-primary));
+  border: none;
+  border-radius: 9999px;
+  padding: 0.875rem 2rem;
+  font-family: var(--font-headline);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.dad-btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.dad-btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Outline button */
+.dad-btn-outline {
+  background: transparent;
+  color: hsl(var(--brand));
+  border: 1.5px solid hsl(var(--brand));
+  border-radius: 9999px;
+  padding: 0.875rem 2rem;
+  font-family: var(--font-headline);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.dad-btn-outline:hover {
+  background: hsl(var(--brand));
+  color: hsl(var(--on-primary));
+}
+
+/* Input */
+.dad-input {
+  width: 100%;
+  background: hsl(var(--surface-input));
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-default);
+  padding: 0.75rem 1rem;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: hsl(var(--foreground));
+  transition: border-color 0.2s ease;
+}
+
+.dad-input:focus {
+  outline: none;
+  border-color: hsl(var(--brand));
+}
+
+.dad-input::placeholder {
+  color: hsl(var(--muted-foreground));
+}
+
+/* Agent avatar */
+.dad-agent-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Chat bubbles */
+.dad-chat-user {
+  background: hsl(var(--brand));
+  color: hsl(var(--on-primary));
+  border-radius: 1.25rem 1.25rem 0.25rem 1.25rem;
+  padding: 0.75rem 1rem;
+  max-width: 80%;
+  word-break: break-word;
+}
+
+.dad-chat-agent {
+  background: hsl(var(--surface-container));
+  color: hsl(var(--foreground));
+  border-radius: 1.25rem 1.25rem 1.25rem 0.25rem;
+  padding: 0.75rem 1rem;
+  max-width: 85%;
+  word-break: break-word;
+}
+
+/* Toggle */
+.dad-toggle {
+  width: 2.75rem;
+  height: 1.5rem;
+  background: hsl(var(--border-subtle));
+  border-radius: 9999px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.dad-toggle[data-active="true"] {
+  background: hsl(var(--brand));
+}
+
+.dad-toggle::after {
+  content: "";
+  position: absolute;
+  top: 0.125rem;
+  left: 0.125rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  background: white;
+  border-radius: 9999px;
+  transition: transform 0.2s ease;
+}
+
+.dad-toggle[data-active="true"]::after {
+  transform: translateX(1.25rem);
+}
+
+/* Bottom nav */
+.dad-bottom-nav {
+  background: hsl(var(--background) / 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid hsl(var(--border-subtle) / 0.15);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Skeleton */
+.dad-skeleton {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--surface-container)) 25%,
+    hsl(var(--surface-elevated)) 50%,
+    hsl(var(--surface-container)) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.5rem;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Editorial shadow */
+.dad-editorial-shadow {
+  box-shadow: 0 8px 24px hsl(var(--shadow-tint));
+}
+
+/* Section spacing */
+.dad-section {
+  padding: 5rem 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .dad-section {
+    padding: 7rem 2rem;
+  }
+}
+
+/* Container */
+.dad-container {
+  max-width: 72rem;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* No-scrollbar utility */
+.dad-no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.dad-no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

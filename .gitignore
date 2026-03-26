@@ -1,0 +1,10 @@
+# AI/editor kit (copied from Cowork Basic Plugin Kit; local only, not committed)
+.cursorrules
+CLAUDE.md
+.cursor/
+.claude/
+
+# Secrets and local env (never commit)
+.env
+.env.local
+.env.*.local

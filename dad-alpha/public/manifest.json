@@ -1,0 +1,25 @@
+{
+  "name": "Dad.alpha — AI Family Assistant",
+  "short_name": "Dad.alpha",
+  "description": "Your AI co-pilot for family logistics, schedules, and staying in sync",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f0f5ff",
+  "theme_color": "#1e40af",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["lifestyle", "productivity"]
+}

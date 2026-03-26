@@ -1,0 +1,99 @@
+/* ==========================================================================
+   Layer 1: CSS Custom Properties — "Steady & Strong" Design System
+   ==========================================================================
+   This is the ONLY file with hardcoded color values.
+   To retheme the entire app, change only this file.
+   ========================================================================== */
+
+/* Default theme: Steady & Strong (light) */
+:root,
+.steady-strong {
+  /* Primary — grounded navy blue */
+  --brand: 221 83% 53%;            /* #2563eb — blue-600 */
+  --brand-glow: 213 97% 87%;       /* #bfdbfe — blue-200 */
+  --brand-dim: 224 76% 48%;        /* #1d4ed8 — blue-700 */
+
+  /* Secondary — warm amber for accents */
+  --secondary: 25 95% 53%;         /* #f97316 — orange-500 */
+  --secondary-container: 33 100% 92%; /* #fff1e0 */
+
+  /* Tertiary — calm slate */
+  --tertiary: 215 16% 47%;         /* #64748b — slate-500 */
+  --tertiary-container: 210 40% 93%; /* #e2e8f0 — slate-200 */
+
+  /* Surfaces */
+  --background: 214 100% 97%;      /* #f0f5ff */
+  --surface: 214 100% 97%;         /* #f0f5ff */
+  --surface-elevated: 214 75% 93%; /* #dbeafe */
+  --surface-active: 214 75% 89%;   /* #c8defe */
+  --surface-input: 214 60% 87%;    /* #b8d4fe */
+  --surface-dim: 214 55% 82%;      /* #a3c4f7 */
+  --surface-container-low: 214 80% 95%; /* #e8f0ff */
+  --surface-container: 214 75% 93%;     /* #dbeafe */
+
+  /* Text */
+  --foreground: 222 47% 11%;       /* #1e293b — slate-800 */
+  --muted-foreground: 215 16% 47%; /* #64748b — slate-500 */
+  --on-primary: 214 100% 97%;      /* #f0f5ff */
+  --on-secondary: 33 100% 97%;     /* #fffbf5 */
+  --on-tertiary: 210 40% 98%;      /* #f8fafc */
+
+  /* Borders & Shadows */
+  --border: 215 25% 50%;           /* #6681a3 */
+  --border-subtle: 215 25% 70%;    /* #9db5ce */
+  --shadow-tint: 222 47% 11% / 0.06;
+
+  /* Error */
+  --error: 0 72% 51%;              /* #dc2626 — red-600 */
+  --error-container: 0 93% 73%;    /* #fca5a5 — red-300 */
+
+  /* Misc */
+  --inverse-surface: 222 47% 8%;   /* #0f172a — slate-900 */
+  --inverse-primary: 217 91% 76%;  /* #93bbfd */
+
+  /* Spacing base */
+  --space-base: 0.35rem;
+
+  /* Border radius */
+  --radius-default: 1rem;
+  --radius-lg: 2rem;
+  --radius-xl: 3rem;
+}
+
+/* Dark theme: Midnight Dad */
+.midnight-dad {
+  --brand: 217 91% 60%;
+  --brand-glow: 217 60% 25%;
+  --brand-dim: 217 91% 70%;
+
+  --secondary: 25 80% 55%;
+  --secondary-container: 25 40% 20%;
+
+  --tertiary: 215 20% 60%;
+  --tertiary-container: 215 20% 22%;
+
+  --background: 222 47% 8%;
+  --surface: 222 40% 10%;
+  --surface-elevated: 222 35% 14%;
+  --surface-active: 222 30% 18%;
+  --surface-input: 222 25% 20%;
+  --surface-dim: 222 25% 6%;
+  --surface-container-low: 222 35% 12%;
+  --surface-container: 222 35% 14%;
+
+  --foreground: 214 32% 91%;
+  --muted-foreground: 215 20% 65%;
+  --on-primary: 222 40% 10%;
+  --on-secondary: 25 20% 10%;
+  --on-tertiary: 215 20% 10%;
+
+  --border: 222 20% 30%;
+  --border-subtle: 222 15% 25%;
+  --shadow-tint: 0 0% 0% / 0.3;
+
+  --error: 0 60% 55%;
+  --error-container: 0 40% 25%;
+
+  --inverse-surface: 214 20% 90%;
+  --inverse-primary: 221 83% 40%;
+}
