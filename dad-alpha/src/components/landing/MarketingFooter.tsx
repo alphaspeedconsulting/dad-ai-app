@@ -12,7 +12,7 @@ export function MarketingFooter() {
     <footer className="border-t border-border-subtle/20 bg-background px-4 py-12 sm:px-6">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-8 sm:flex-row sm:justify-between">
         <div className="text-center sm:text-left">
-          <p className="font-headline text-alphaai-lg font-bold text-foreground">Dad.alpha</p>
+          <p className="font-headline text-alphaai-lg font-bold text-foreground">Alpha.Dad</p>
           <p className="mt-1 text-alphaai-xs text-muted-foreground">Powered by AlphaSpeed AI</p>
         </div>
         <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2" aria-label="Legal">

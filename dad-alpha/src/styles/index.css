@@ -60,6 +60,60 @@
   --radius-xl: 3rem;
 }
 
+/* Tactical theme: Alpha.Dad — "Garage Modern" dark design system.
+   Scoped to the landing page wrapper only. App pages retain steady-strong.
+   ============================================================
+   Primary:    Electric cyan  (#00CCFF  192 100% 50%)
+   Secondary:  Warm amber     (#F99320  32  95%  54%)
+   Background: Near-black     (#090B14  222 35%  6%)
+   ============================================================ */
+.alpha-dad {
+  /* Primary — electric cyan */
+  --brand: 192 100% 50%;           /* #00CCFF */
+  --brand-glow: 192 100% 68%;      /* #5CE6FF */
+  --brand-dim: 192 100% 36%;       /* #009AB8 */
+
+  /* Secondary — warm amber (retained for contrast) */
+  --secondary: 32 95% 54%;         /* #F99320 */
+  --secondary-container: 32 55% 12%; /* #2A1A07 */
+
+  /* Tertiary — steel blue-gray */
+  --tertiary: 210 25% 60%;         /* #7E9DB8 */
+  --tertiary-container: 215 30% 11%; /* #0F1820 */
+
+  /* Surfaces — deep dark tactical */
+  --background: 222 35% 6%;        /* #090B14 */
+  --surface: 220 30% 8%;           /* #0D1019 */
+  --surface-elevated: 220 28% 11%; /* #111823 */
+  --surface-active: 220 25% 15%;   /* #181F2E */
+  --surface-input: 220 25% 13%;    /* #141B28 */
+  --surface-dim: 222 38% 5%;       /* #070810 */
+  --surface-container-low: 220 28% 10%; /* #0F1621 */
+  --surface-container: 220 28% 12%; /* #121A26 */
+
+  /* Text */
+  --foreground: 210 35% 93%;       /* #DEEEFB */
+  --muted-foreground: 215 20% 48%; /* #627B9C */
+  --on-primary: 222 35% 6%;        /* dark text on cyan buttons */
+  --on-secondary: 32 20% 10%;
+  --on-tertiary: 210 40% 98%;
+
+  /* Borders */
+  --border: 215 28% 22%;           /* #243347 */
+  --border-subtle: 215 25% 15%;    /* #192330 */
+  --shadow-tint: 0 0% 0% / 0.55;
+
+  /* Error */
+  --error: 0 72% 51%;
+  --error-container: 0 40% 18%;
+
+  /* Misc */
+  --inverse-surface: 210 35% 93%;
+  --inverse-primary: 192 80% 25%;
+
+  /* Spacing & radius unchanged */
+}
+
 /* Dark theme: Midnight Dad */
 .midnight-dad {
   --brand: 217 91% 60%;

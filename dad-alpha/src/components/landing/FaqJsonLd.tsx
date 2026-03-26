@@ -28,7 +28,7 @@ export function OrganizationJsonLd() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "Dad.alpha",
+    name: "Alpha.Dad",
     url: site,
     parentOrganization: {
       "@type": "Organization",

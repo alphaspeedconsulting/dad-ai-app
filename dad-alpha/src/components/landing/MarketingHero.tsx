@@ -3,23 +3,19 @@ import Link from "next/link";
 export function MarketingHero() {
   return (
     <section
-      className="relative overflow-hidden px-4 pb-16 pt-28 sm:px-6 sm:pb-24 sm:pt-32"
+      className="dad-tactical-grid relative overflow-hidden px-4 pb-16 pt-28 sm:px-6 sm:pb-24 sm:pt-32"
       aria-labelledby="hero-heading"
     >
       {/* Background ambient orbs */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-        <div className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-brand-glow/20 blur-[100px]" />
-        <div className="absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-tertiary-container/30 blur-[110px]" />
-        <div className="absolute left-1/2 top-1/3 h-64 w-64 -translate-x-1/2 rounded-full bg-secondary-container/15 blur-[90px]" />
+        <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-brand/10 blur-[120px]" />
+        <div className="absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-brand/5 blur-[110px]" />
+        <div className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-secondary/5 blur-[80px]" />
       </div>
 
       <div className="relative mx-auto max-w-4xl text-center">
-        {/* Launch badge with pulse */}
-        <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-border-subtle/40 bg-surface-container-low px-3 py-1 text-alphaai-xs font-semibold uppercase tracking-wider text-brand">
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-60" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-brand" />
-          </span>
+        {/* Tactical status pill */}
+        <p className="dad-status-pill mb-4">
           Launching soon
         </p>
 

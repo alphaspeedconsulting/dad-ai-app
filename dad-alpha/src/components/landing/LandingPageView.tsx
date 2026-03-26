@@ -17,7 +17,7 @@ export function LandingPageView() {
     <>
       <OrganizationJsonLd />
       <FaqJsonLd />
-      <div className="min-h-screen bg-background pb-20 md:pb-0">
+      <div className="alpha-dad min-h-screen bg-background pb-20 md:pb-0">
         <MarketingNav />
         <main id="main-content">
           <MarketingHero />

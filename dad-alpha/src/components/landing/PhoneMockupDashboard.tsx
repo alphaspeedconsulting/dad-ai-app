@@ -10,7 +10,7 @@ export function PhoneMockupDashboard() {
       <div className="px-3 py-1.5 flex items-center justify-between flex-shrink-0">
         <div>
           <p className="text-alphaai-3xs text-muted-foreground">Good morning, Dad</p>
-          <p className="font-headline text-alphaai-sm font-bold text-foreground">Dad.alpha</p>
+          <p className="font-headline text-alphaai-sm font-bold text-foreground">Alpha.Dad</p>
         </div>
         <div className="relative w-7 h-7 rounded-full bg-surface-container flex items-center justify-center">
           <span className="material-symbols-outlined text-[14px] text-foreground">notifications</span>

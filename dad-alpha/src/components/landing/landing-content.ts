@@ -1,4 +1,4 @@
-/** Static marketing copy — Dad.alpha MVP scope (4 agents, PWA, shared backend with Mom.alpha). */
+/** Static marketing copy — Alpha.Dad MVP scope (4 agents, PWA, shared backend with Mom.alpha). */
 
 export const PRODUCT_SHOWCASE_ITEMS = [
   {
@@ -74,7 +74,7 @@ export const DAY_TIMELINE = [
     icon: "bedtime",
     title: "Handoff note",
     body: "Quick summary for your partner: expenses logged, tomorrow’s pickup time confirmed.",
-    agent: "Dad.alpha",
+    agent: "Alpha.Dad",
   },
 ] as const;
 
@@ -129,7 +129,7 @@ export const PRIVACY_POINTS = [
   {
     icon: "shield",
     title: "Built for families",
-    body: "Dad.alpha is designed so household data stays within flows you control. Follow your org’s privacy policy and in-app disclosures at signup.",
+    body: "Alpha.Dad is designed so household data stays within flows you control. Follow your org’s privacy policy and in-app disclosures at signup.",
   },
   {
     icon: "lock",
@@ -181,9 +181,9 @@ export const PRICING_TIERS = [
 
 export const FAQ_ITEMS: { question: string; answer: string }[] = [
   {
-    question: "What is Dad.alpha?",
+    question: "What is Alpha.Dad?",
     answer:
-      "Dad.alpha is a Progressive Web App that helps you run family logistics: stay aligned with your co-parent, manage schedules and school tasks, track expenses, and use four AI agents built for real household work.",
+      "Alpha.Dad is a Progressive Web App that helps you run family logistics: stay aligned with your co-parent, manage schedules and school tasks, track expenses, and use four AI agents built for real household work.",
   },
   {
     question: "How does the AI work?",
@@ -193,7 +193,7 @@ export const FAQ_ITEMS: { question: string; answer: string }[] = [
   {
     question: "Is my data safe?",
     answer:
-      "Use the privacy policy and AI disclosure shown at signup for authoritative terms. Dad.alpha shares a backend with Mom.alpha — treat it like any sensitive family account: secure device, strong password, and review permissions you grant.",
+      "Use the privacy policy and AI disclosure shown at signup for authoritative terms. Alpha.Dad shares a backend with Mom.alpha — treat it like any sensitive family account: secure device, strong password, and review permissions you grant.",
   },
   {
     question: "Which calendars does it support?",
@@ -208,7 +208,7 @@ export const FAQ_ITEMS: { question: string; answer: string }[] = [
   {
     question: "What devices work?",
     answer:
-      "Dad.alpha is a PWA — install from the browser on modern iOS (16.4+), Android, tablets, and desktop. Offline behavior depends on cached assets and mock mode settings.",
+      "Alpha.Dad is a PWA — install from the browser on modern iOS (16.4+), Android, tablets, and desktop. Offline behavior depends on cached assets and mock mode settings.",
   },
   {
     question: "What is the difference between Family and Family Pro?",

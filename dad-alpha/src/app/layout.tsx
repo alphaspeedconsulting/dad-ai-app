@@ -21,8 +21,8 @@ const siteUrl = "https://dad.alphaspeedai.com";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Dad.alpha — AI Family Co-Pilot",
-    template: "%s | Dad.alpha",
+    default: "Alpha.Dad — AI Family Co-Pilot",
+    template: "%s | Alpha.Dad",
   },
   description:
     "Your AI co-pilot for family logistics. Stay in sync with your partner, manage schedules, track expenses, and never miss a school event.",
@@ -34,6 +34,7 @@ export const metadata: Metadata = {
     "partner sync",
     "family organizer",
     "co-parenting app",
+    "alpha dad",
   ],
   authors: [{ name: "AlphaSpeed AI" }],
   creator: "AlphaSpeed AI",
@@ -43,16 +44,16 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    siteName: "Dad.alpha",
-    title: "Dad.alpha — AI Family Co-Pilot",
+    siteName: "Alpha.Dad",
+    title: "Alpha.Dad — AI Family Co-Pilot",
     description:
       "Your AI co-pilot for family logistics. Stay in sync, stay ahead.",
     url: siteUrl,
-    images: [{ url: "/icons/icon-512.png", width: 512, height: 512, alt: "Dad.alpha" }],
+    images: [{ url: "/icons/icon-512.png", width: 512, height: 512, alt: "Alpha.Dad" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Dad.alpha — AI Family Co-Pilot",
+    title: "Alpha.Dad — AI Family Co-Pilot",
     description: "Your AI co-pilot for family logistics. Stay in sync, stay ahead.",
     images: ["/icons/icon-512.png"],
   },
