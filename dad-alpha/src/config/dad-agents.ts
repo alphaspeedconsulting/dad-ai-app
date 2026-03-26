@@ -25,9 +25,15 @@ export const DAD_AGENTS: readonly DadAgentDefinition[] = [
     agent_type: "calendar_whiz",
     name: "Schedule Sync",
     description:
-      "Manages family schedules, detects conflicts between parent calendars, and syncs events.",
+      "Manages family schedules, detects conflicts between parent calendars, syncs events, and tracks maintenance due dates and trip windows.",
     icon: "calendar_month",
-    capabilities: ["Conflict detection", "Calendar sync", "Smart rescheduling"],
+    capabilities: [
+      "Conflict detection",
+      "Calendar sync",
+      "Smart rescheduling",
+      "Vehicle service due dates",
+      "Trip date planning",
+    ],
   },
   {
     agent_type: "school_event_hub",
@@ -40,9 +46,16 @@ export const DAD_AGENTS: readonly DadAgentDefinition[] = [
   {
     agent_type: "budget_buddy",
     name: "Expense Tracker",
-    description: "Tracks family spending, categorizes expenses, and finds savings opportunities.",
+    description:
+      "Tracks family spending, categorizes expenses, finds savings opportunities, and logs car and home project costs.",
     icon: "account_balance_wallet",
-    capabilities: ["Receipt scanning", "Expense tracking", "Budget alerts"],
+    capabilities: [
+      "Receipt scanning",
+      "Expense tracking",
+      "Budget alerts",
+      "Car & home project costs",
+      "Trip budget tracking",
+    ],
   },
   {
     agent_type: "grocery_guru",

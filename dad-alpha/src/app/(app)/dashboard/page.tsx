@@ -177,13 +177,13 @@ export default function DashboardPage() {
               <span className="text-alphaai-sm font-medium text-foreground">School Hub</span>
             </Link>
             <Link
-              href="/chat/calendar_whiz"
+              href="/household-ops"
               className="dad-card p-4 flex flex-col items-center gap-2 hover:bg-surface-container-low transition-colors"
             >
               <div className="w-12 h-12 bg-brand-glow/20 rounded-xl flex items-center justify-center">
-                <span className="material-symbols-outlined text-[24px] text-brand">event</span>
+                <span className="material-symbols-outlined text-[24px] text-brand">home_repair_service</span>
               </div>
-              <span className="text-alphaai-sm font-medium text-foreground">Schedule Sync</span>
+              <span className="text-alphaai-sm font-medium text-foreground">Household Ops</span>
             </Link>
           </div>
         </section>

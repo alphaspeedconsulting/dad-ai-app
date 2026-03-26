@@ -10,6 +10,8 @@ import type {
   AuthEmailRequest,
   AuthGoogleRequest,
   AuthResponse,
+  AutomationRoutine,
+  AutomationRoutineCreateRequest,
   BudgetResponse,
   CalendarEventCreateRequest,
   CalendarEventUpdateRequest,
@@ -24,7 +26,10 @@ import type {
   ConsentStatusResponse,
   Expense,
   ExpenseSummary,
+  GoogleCalendarConnectionStatus,
   GroceryList,
+  HomeProject,
+  HomeProjectCreateRequest,
   Household,
   HouseholdCreateRequest,
   HouseholdInviteRequest,
@@ -42,6 +47,12 @@ import type {
   SleepHistoryResponse,
   SleepLogRequest,
   TaskListResponse,
+  TripPlan,
+  TripPlanCreateRequest,
+  Vehicle,
+  VehicleCreateRequest,
+  VehicleServiceItem,
+  VehicleServiceItemCreateRequest,
   WeeklyPlan,
   CalendarConflict,
   WellnessStreak,
@@ -304,4 +315,81 @@ export const analytics = {
 export const admin = {
   llmCosts: (period?: string) =>
     request<LLMCostReport>(`/api/admin/llm-costs${period ? `?period=${period}` : ""}`),
+};
+
+// Household Ops — vehicles, home projects, trips, routines (Family Pro)
+export const householdOps = {
+  // Vehicles
+  listVehicles: (householdId: string) =>
+    request<Vehicle[]>(`/api/household/${householdId}/vehicles`),
+  createVehicle: (householdId: string, body: VehicleCreateRequest) =>
+    request<Vehicle>(`/api/household/${householdId}/vehicles`, {
+      method: "POST", body: JSON.stringify(body),
+    }),
+  updateVehicle: (householdId: string, vehicleId: string, body: Partial<VehicleCreateRequest>) =>
+    request<Vehicle>(`/api/household/${householdId}/vehicles/${vehicleId}`, {
+      method: "PUT", body: JSON.stringify(body),
+    }),
+  deleteVehicle: (householdId: string, vehicleId: string) =>
+    request<void>(`/api/household/${householdId}/vehicles/${vehicleId}`, { method: "DELETE" }),
+  listServiceItems: (householdId: string, vehicleId: string) =>
+    request<VehicleServiceItem[]>(`/api/household/${householdId}/vehicles/${vehicleId}/service`),
+  createServiceItem: (householdId: string, vehicleId: string, body: VehicleServiceItemCreateRequest) =>
+    request<VehicleServiceItem>(`/api/household/${householdId}/vehicles/${vehicleId}/service`, {
+      method: "POST", body: JSON.stringify(body),
+    }),
+
+  // Home projects
+  listProjects: (householdId: string) =>
+    request<HomeProject[]>(`/api/household/${householdId}/projects`),
+  createProject: (householdId: string, body: HomeProjectCreateRequest) =>
+    request<HomeProject>(`/api/household/${householdId}/projects`, {
+      method: "POST", body: JSON.stringify(body),
+    }),
+  updateProject: (householdId: string, projectId: string, body: Partial<HomeProjectCreateRequest>) =>
+    request<HomeProject>(`/api/household/${householdId}/projects/${projectId}`, {
+      method: "PUT", body: JSON.stringify(body),
+    }),
+  deleteProject: (householdId: string, projectId: string) =>
+    request<void>(`/api/household/${householdId}/projects/${projectId}`, { method: "DELETE" }),
+
+  // Trips
+  listTrips: (householdId: string) =>
+    request<TripPlan[]>(`/api/household/${householdId}/trips`),
+  createTrip: (householdId: string, body: TripPlanCreateRequest) =>
+    request<TripPlan>(`/api/household/${householdId}/trips`, {
+      method: "POST", body: JSON.stringify(body),
+    }),
+  updateTrip: (householdId: string, tripId: string, body: Partial<TripPlanCreateRequest>) =>
+    request<TripPlan>(`/api/household/${householdId}/trips/${tripId}`, {
+      method: "PUT", body: JSON.stringify(body),
+    }),
+  deleteTrip: (householdId: string, tripId: string) =>
+    request<void>(`/api/household/${householdId}/trips/${tripId}`, { method: "DELETE" }),
+
+  // Routines
+  listRoutines: (householdId: string) =>
+    request<AutomationRoutine[]>(`/api/household/${householdId}/routines`),
+  createRoutine: (householdId: string, body: AutomationRoutineCreateRequest) =>
+    request<AutomationRoutine>(`/api/household/${householdId}/routines`, {
+      method: "POST", body: JSON.stringify(body),
+    }),
+  updateRoutine: (householdId: string, routineId: string, body: Partial<AutomationRoutineCreateRequest>) =>
+    request<AutomationRoutine>(`/api/household/${householdId}/routines/${routineId}`, {
+      method: "PUT", body: JSON.stringify(body),
+    }),
+  deleteRoutine: (householdId: string, routineId: string) =>
+    request<void>(`/api/household/${householdId}/routines/${routineId}`, { method: "DELETE" }),
+};
+
+// Google Calendar OAuth
+export const googleCalendar = {
+  connectionStatus: () =>
+    request<GoogleCalendarConnectionStatus>("/api/integrations/google-calendar/status"),
+  connect: (redirectUri: string) =>
+    request<{ auth_url: string }>("/api/integrations/google-calendar/connect", {
+      method: "POST", body: JSON.stringify({ redirect_uri: redirectUri }),
+    }),
+  disconnect: () =>
+    request<void>("/api/integrations/google-calendar/disconnect", { method: "POST" }),
 };

@@ -30,8 +30,9 @@ export function MarketingHero() {
         </h1>
 
         <p className="mx-auto mt-5 max-w-2xl text-pretty text-alphaai-lg text-muted-foreground">
-          Four AI agents built for co-parenting: calendars, school, expenses, and groceries — in one PWA. Share
-          context with your partner without chasing threads.
+          Four AI agents built for co-parenting: calendars, school, expenses, and groceries — plus a{" "}
+          <span className="text-foreground font-medium">Family Pro</span> hub for your garage, home projects, trips,
+          and routines. Share context with your partner without chasing threads.
         </p>
 
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">

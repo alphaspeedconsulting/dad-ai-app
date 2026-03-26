@@ -12,14 +12,24 @@ export const PRODUCT_SHOWCASE_ITEMS = [
     icon: "sync" as const,
   },
   {
-    title: "Weekly plan",
-    subtitle: "Schedule",
+    title: "Garage",
+    subtitle: "Family Pro",
     lines: [
-      { label: "Thu", value: "Practice 4:30 PM" },
-      { label: "Fri", value: "Permission slip due" },
-      { label: "Sat", value: "Family dinner 6:00 PM" },
+      { label: "Family SUV", value: "Oil change due Jun 1", highlight: true },
+      { label: "Mileage", value: "34,200 mi · next at 36k" },
+      { label: "Expense", value: "Logged to Budget Buddy" },
     ],
-    icon: "event" as const,
+    icon: "directions_car" as const,
+  },
+  {
+    title: "Trip planner",
+    subtitle: "Family Pro",
+    lines: [
+      { label: "Beach Week", value: "Jul 12–19 · Outer Banks", highlight: true },
+      { label: "Budget", value: "$2,200 est." },
+      { label: "Packing list", value: "Checklist started — 8 items" },
+    ],
+    icon: "flight_takeoff" as const,
   },
   {
     title: "Expenses & lists",
@@ -91,6 +101,29 @@ export const FEATURE_DEEP_DIVES = [
     ],
   },
   {
+    id: "household-ops",
+    icon: "home_repair_service",
+    title: "Household Ops (Family Pro)",
+    lead: "Run the house like a project, not a stack of sticky notes.",
+    bullets: [
+      "Garage: track vehicles, maintenance schedules, and service due dates",
+      "Home & yard: log projects with status, area, and budget link",
+      "Trips: itinerary drafts, date blocks, packing checklist, and trip budget",
+      "Routines: named sequences of reminders and checklist steps",
+    ],
+  },
+  {
+    id: "google-calendar",
+    icon: "event_sync",
+    title: "Works with Google Calendar",
+    lead: "Connect once, keep everything in sync.",
+    bullets: [
+      "OAuth connect in Settings — no manual export",
+      "Maintenance due dates and trip windows create calendar events automatically",
+      "Google first; more calendar sources on the roadmap",
+    ],
+  },
+  {
     id: "ai-chat",
     icon: "chat",
     title: "AI-powered chat",
@@ -98,7 +131,7 @@ export const FEATURE_DEEP_DIVES = [
     bullets: [
       "Quick tasks feel instant in the app",
       "Longer asks route through the right agent",
-      "Same four agents you see on the Agents screen",
+      "Same four agents — Schedule Sync and Expense Tracker now cover household ops too",
     ],
   },
   {
@@ -109,7 +142,7 @@ export const FEATURE_DEEP_DIVES = [
     bullets: [
       "Dedicated expenses view in the PWA",
       "Categories and weekly cues from Expense Tracker",
-      "Designed to pair with receipt-style capture where available",
+      "Car, home project, and trip costs tracked alongside everyday spending",
     ],
   },
   {
@@ -171,9 +204,11 @@ export const PRICING_TIERS = [
     cta: "Get Early Access",
     features: [
       "Everything in Family",
+      "Household Ops hub: garage & maintenance, home projects, trip planner, routines",
+      "Google Calendar sync — maintenance and trip dates create events automatically",
+      "Partner digest includes household ops updates (garage, home, trips)",
       "Higher AI interaction limits when enabled on the backend",
       "Priority routing when the platform offers it",
-      "Same four agents today — more capabilities ship on the roadmap",
       "7-day free trial where offered",
     ],
   },
@@ -183,22 +218,37 @@ export const FAQ_ITEMS: { question: string; answer: string }[] = [
   {
     question: "What is Alpha.Dad?",
     answer:
-      "Alpha.Dad is a Progressive Web App that helps you run family logistics: stay aligned with your co-parent, manage schedules and school tasks, track expenses, and use four AI agents built for real household work.",
+      "Alpha.Dad is a Progressive Web App that helps you run family logistics: stay aligned with your co-parent, manage schedules and school tasks, track expenses, and use four AI agents built for real household work. Family Pro adds Household Ops — garage maintenance, home projects, trip planning, and routines.",
+  },
+  {
+    question: "What is Household Ops?",
+    answer:
+      "Household Ops is a Family Pro feature that brings four ops categories into one hub: Garage (track vehicles and maintenance schedules), Home (log projects and repairs), Trips (itinerary drafts, dates, budgets, and packing lists), and Routines (named sequences of reminders and checklist steps). No smart-home device control in v1 — it is structured household management, not IoT.",
+  },
+  {
+    question: "How does Google Calendar connect?",
+    answer:
+      "Connect your Google account once in Settings. Alpha.Dad then creates calendar events for vehicle service due dates and trip windows automatically. Disconnect at any time from the same Settings screen. Google is the first integration; more calendar sources are on the roadmap.",
   },
   {
     question: "How does the AI work?",
     answer:
-      "Simple actions in the app stay fast on the client. Longer requests go through the agent chat for the specialist you picked (calendar, school, budget, or groceries). Behavior matches mock mode when you are offline or using demo data.",
+      "Simple actions in the app stay fast on the client. Longer requests go through the agent chat for the specialist you picked (calendar, school, budget, or groceries). Schedule Sync and Expense Tracker now understand household ops context — car costs, trip dates, and project budgets — so you can ask them naturally.",
+  },
+  {
+    question: "Does my partner see Household Ops updates?",
+    answer:
+      "Yes, on Family Pro. Garage, home project, and trip updates are included in the Partner Sync digest so your co-parent stays in the loop alongside calendar and expense items.",
   },
   {
     question: "Is my data safe?",
     answer:
-      "Use the privacy policy and AI disclosure shown at signup for authoritative terms. Alpha.Dad shares a backend with Mom.alpha — treat it like any sensitive family account: secure device, strong password, and review permissions you grant.",
+      "Use the privacy policy and AI disclosure shown at signup for authoritative terms. Alpha.Dad shares a backend with Mom.alpha — treat it like any sensitive family account: secure device, strong password, and review permissions you grant. Google Calendar tokens are stored server-side with standard OAuth security practices.",
   },
   {
     question: "Which calendars does it support?",
     answer:
-      "The product is built with Google Calendar-style flows in mind; availability depends on the connected backend. Check in-app settings after login for what is live for your account.",
+      "Google Calendar is the first integration for creating events from maintenance due dates and trip windows. Check in-app Settings after login for what is live for your account.",
   },
   {
     question: "Can I cancel anytime?",
@@ -213,6 +263,6 @@ export const FAQ_ITEMS: { question: string; answer: string }[] = [
   {
     question: "What is the difference between Family and Family Pro?",
     answer:
-      "Both tiers include the same four agents today. Pro is positioned for higher usage limits and priority features as they roll out on the platform. Exact entitlements follow checkout and backend configuration.",
+      "Family includes the four core agents, partner sync, checklists, and expenses. Family Pro adds Household Ops (garage, home projects, trips, routines), Google Calendar sync, household ops in the partner digest, and higher AI usage limits.",
   },
 ];

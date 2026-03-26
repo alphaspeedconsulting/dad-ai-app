@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     template: "%s | Alpha.Dad",
   },
   description:
-    "Your AI co-pilot for family logistics. Stay in sync with your partner, manage schedules, track expenses, and never miss a school event.",
+    "Your AI co-pilot for family logistics. Stay in sync with your partner, manage schedules, track expenses, plan trips, and keep the whole household running.",
   keywords: [
     "AI family assistant",
     "dad productivity",
@@ -35,6 +35,11 @@ export const metadata: Metadata = {
     "family organizer",
     "co-parenting app",
     "alpha dad",
+    "car maintenance tracker",
+    "family trip planner",
+    "home projects app",
+    "Google Calendar family",
+    "household management app",
   ],
   authors: [{ name: "AlphaSpeed AI" }],
   creator: "AlphaSpeed AI",

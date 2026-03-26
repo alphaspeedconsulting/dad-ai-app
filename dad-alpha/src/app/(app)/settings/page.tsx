@@ -5,9 +5,20 @@ import { useAuthStore } from "@/stores/auth-store";
 import { useSubscriptionStore } from "@/stores/subscription-store";
 import { useHouseholdStore } from "@/stores/household-store";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
+import * as api from "@/lib/api-client";
+import type { GoogleCalendarConnectionStatus } from "@/types/api-contracts";
 import Link from "next/link";
 
+const isMockMode = process.env.NEXT_PUBLIC_MOCK_MODE === "true";
+
 const IS_BETA = process.env.NEXT_PUBLIC_BETA_MODE === "true";
+
+const MOCK_GOOGLE_STATUS: GoogleCalendarConnectionStatus = {
+  connected: false,
+  email: null,
+  scopes: [],
+  connected_at: null,
+};
 
 const PRICES = {
   family: { monthly: "$7.99/mo", yearly: "$69.99/yr" },
@@ -39,12 +50,54 @@ export default function SettingsPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteToken, setInviteToken] = useState("");
   const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
+  const [googleStatus, setGoogleStatus] = useState<GoogleCalendarConnectionStatus | null>(null);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [googleError, setGoogleError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.household_id) return;
     fetchMembers(user.household_id);
     fetchUsage(user.household_id);
   }, [user?.household_id, fetchMembers, fetchUsage]);
+
+  useEffect(() => {
+    if (isMockMode) {
+      setGoogleStatus(MOCK_GOOGLE_STATUS);
+      return;
+    }
+    setIsGoogleLoading(true);
+    api.googleCalendar
+      .connectionStatus()
+      .then((status) => setGoogleStatus(status))
+      .catch(() => setGoogleStatus({ connected: false, email: null, scopes: [], connected_at: null }))
+      .finally(() => setIsGoogleLoading(false));
+  }, []);
+
+  const handleGoogleConnect = async () => {
+    setIsGoogleLoading(true);
+    setGoogleError(null);
+    try {
+      const redirectUri = `${window.location.origin}/settings?google_callback=1`;
+      const { auth_url } = await api.googleCalendar.connect(redirectUri);
+      window.location.href = auth_url;
+    } catch (err) {
+      setGoogleError(err instanceof Error ? err.message : "Could not start Google connection.");
+      setIsGoogleLoading(false);
+    }
+  };
+
+  const handleGoogleDisconnect = async () => {
+    setIsGoogleLoading(true);
+    setGoogleError(null);
+    try {
+      await api.googleCalendar.disconnect();
+      setGoogleStatus({ connected: false, email: null, scopes: [], connected_at: null });
+    } catch (err) {
+      setGoogleError(err instanceof Error ? err.message : "Could not disconnect Google Calendar.");
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
 
   const handleUpgrade = async (tier: "family" | "family_pro") => {
     setIsCheckingOut(true);
@@ -280,6 +333,62 @@ export default function SettingsPage() {
               <div className="rounded-xl border border-error/20 bg-error/10 p-3">
                 <p className="text-alphaai-xs text-error">{householdError}</p>
                 <button onClick={clearError} className="text-alphaai-3xs text-error/80 underline mt-1">Dismiss</button>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Connected Accounts */}
+        <section>
+          <h3 className="font-headline text-alphaai-md font-semibold text-foreground mb-3">
+            Connected Accounts
+          </h3>
+          <div className="dad-card p-4 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-surface-container flex items-center justify-center flex-shrink-0">
+                <span className="material-symbols-outlined text-[18px] text-foreground">calendar_month</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-alphaai-sm font-medium text-foreground">Google Calendar</p>
+                <p className="text-alphaai-3xs text-muted-foreground">
+                  {isGoogleLoading
+                    ? "Checking…"
+                    : googleStatus?.connected
+                    ? `Connected${googleStatus.email ? ` as ${googleStatus.email}` : ""}`
+                    : "Not connected"}
+                </p>
+              </div>
+              {!isGoogleLoading && (
+                googleStatus?.connected ? (
+                  <button
+                    onClick={handleGoogleDisconnect}
+                    className="dad-btn-outline text-alphaai-xs py-1.5 px-3 flex-shrink-0"
+                  >
+                    Disconnect
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleGoogleConnect}
+                    className="dad-btn-primary text-alphaai-xs py-1.5 px-3 flex-shrink-0"
+                  >
+                    Connect
+                  </button>
+                )
+              )}
+            </div>
+            {googleError && (
+              <p className="text-alphaai-xs text-error">{googleError}</p>
+            )}
+            {user?.tier !== "family_pro" && (
+              <div className="rounded-xl border border-border-subtle/20 bg-surface-container-low/50 p-3 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[16px] text-muted-foreground">lock</span>
+                <p className="text-alphaai-3xs text-muted-foreground">
+                  Google Calendar sync with household ops is a{" "}
+                  <Link href="/settings" className="text-brand underline">
+                    Family Pro
+                  </Link>{" "}
+                  feature.
+                </p>
               </div>
             )}
           </div>

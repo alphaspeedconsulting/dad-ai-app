@@ -50,7 +50,8 @@ export function ProductShowcase() {
           Built for real days
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-center text-alphaai-sm text-muted-foreground">
-          Four screens you&apos;ll actually use — partner sync, family calendar, expense tracking, and AI agent chat.
+          Partner sync, family calendar, expenses, and AI agent chat — plus Household Ops for your garage, home
+          projects, trips, and routines on Family Pro.
         </p>
 
         {/* Mobile: horizontal scroll carousel */}

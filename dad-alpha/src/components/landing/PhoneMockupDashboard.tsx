@@ -59,7 +59,7 @@ export function PhoneMockupDashboard() {
               { icon: "checklist", label: "New Checklist", bg: "bg-brand-glow/30", color: "text-brand" },
               { icon: "receipt_long", label: "Track Expense", bg: "bg-secondary-container/60", color: "text-secondary" },
               { icon: "school", label: "School Hub", bg: "bg-tertiary-container/60", color: "text-tertiary" },
-              { icon: "calendar_month", label: "Schedule", bg: "bg-brand-glow/20", color: "text-brand" },
+              { icon: "home_repair_service", label: "Household Ops", bg: "bg-brand-glow/20", color: "text-brand" },
             ].map((a) => (
               <div key={a.label} className="dad-card p-2 flex flex-col items-center gap-1">
                 <div className={`w-8 h-8 ${a.bg} rounded-xl flex items-center justify-center`}>
