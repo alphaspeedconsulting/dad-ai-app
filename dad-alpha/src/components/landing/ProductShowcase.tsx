@@ -15,8 +15,8 @@ function PhoneFrame({ children, label, featured }: PhoneFrameProps) {
   return (
     <div className="flex flex-col items-center snap-center flex-shrink-0 w-[240px] sm:w-auto">
       <div
-        className={`relative w-full rounded-[2rem] border border-border-subtle/40 bg-surface-elevated shadow-xl overflow-hidden transition-transform hover:scale-[1.02] hover:shadow-2xl ${featured ? "ring-2 ring-brand/20" : ""}`}
-        style={{ height: "460px" }}
+        className={`relative w-full rounded-[2.25rem] border border-foreground/10 bg-surface-elevated shadow-2xl overflow-hidden transition-all hover:scale-[1.02] hover:shadow-[0_32px_64px_-12px_hsl(var(--shadow-tint)/0.25)] ${featured ? "ring-2 ring-brand/25" : ""}`}
+        style={{ height: "520px" }}
         role="img"
         aria-label={`App preview: ${label}`}
       >
