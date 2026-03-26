@@ -23,17 +23,38 @@ export function MarketingHero() {
           id="hero-heading"
           className="font-headline text-balance text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl"
         >
-          Stay steady.{" "}
+          Run the whole house.{" "}
           <span className="bg-gradient-to-r from-brand via-brand-dim to-brand-glow bg-clip-text text-transparent">
-            We&apos;ll handle the logistics.
+            AI built for dads.
           </span>
         </h1>
 
         <p className="mx-auto mt-5 max-w-2xl text-pretty text-alphaai-lg text-muted-foreground">
-          Four AI agents built for co-parenting: calendars, school, expenses, and groceries — plus a{" "}
-          <span className="text-foreground font-medium">Family Pro</span> hub for your garage, home projects, trips,
-          and routines. Share context with your partner without chasing threads.
+          From school pickups to oil changes, weekend grilling to yard projects — Alpha.Dad keeps every domain of dad
+          life in one place. Stay synced with your partner without chasing threads.
         </p>
+
+        {/* Use-case chips */}
+        <div className="mt-6 flex flex-wrap justify-center gap-2">
+          {[
+            { icon: "directions_car", label: "Garage" },
+            { icon: "yard", label: "Yard" },
+            { icon: "outdoor_grill", label: "Grill" },
+            { icon: "home_repair_service", label: "Home Projects" },
+            { icon: "flight_takeoff", label: "Trips" },
+            { icon: "calendar_month", label: "Schedules" },
+            { icon: "school", label: "School" },
+            { icon: "receipt_long", label: "Expenses" },
+          ].map(({ icon, label }) => (
+            <span
+              key={label}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle/40 bg-surface/60 px-3 py-1 text-alphaai-xs font-medium text-muted-foreground"
+            >
+              <span className="material-symbols-outlined text-[13px] text-brand">{icon}</span>
+              {label}
+            </span>
+          ))}
+        </div>
 
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
           <Link
@@ -55,7 +76,7 @@ export function MarketingHero() {
           <p className="text-alphaai-xs text-muted-foreground">7-day free trial where offered. No credit card for trial signup.</p>
           <div className="flex items-center gap-1.5 text-alphaai-xs text-muted-foreground">
             <span className="material-symbols-outlined text-[14px] text-brand">shield</span>
-            Built by parents, for parents
+            Built by dads, for dads
           </div>
         </div>
       </div>
