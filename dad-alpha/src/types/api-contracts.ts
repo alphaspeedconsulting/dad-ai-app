@@ -56,6 +56,7 @@ export interface JWTClaims {
   tier: SubscriptionTier;
   email: string;
   name: string;
+  parent_brand?: ParentBrand; // "mom" | "dad" — which app issued this token
   iat: number;
   exp: number;
 }
@@ -66,11 +67,13 @@ export interface JWTClaims {
 
 export interface AuthGoogleRequest {
   id_token: string; // Google OAuth ID token
+  parent_brand?: ParentBrand;
 }
 
 export interface AuthEmailRequest {
   email: string;
   password: string;
+  parent_brand?: ParentBrand;
 }
 
 export interface AuthResponse {
