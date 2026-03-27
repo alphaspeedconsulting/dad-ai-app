@@ -4,27 +4,28 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { AuthForm } from "@/components/auth/AuthForm";
 
-function LoginInner() {
+function SignupInner() {
   const searchParams = useSearchParams();
-  const initialMode = searchParams.get("mode") === "signup" ? "signup" : "login";
+  const promoFromUrl = searchParams.get("promo")?.trim().toUpperCase() ?? "";
   const initialPromo =
-    typeof window !== "undefined"
+    promoFromUrl ||
+    (typeof window !== "undefined"
       ? (localStorage.getItem("dad-alpha-promo-code") ?? "")
-      : "";
+      : "");
 
   return (
     <AuthForm
-      initialMode={initialMode as "login" | "signup"}
+      initialMode="signup"
       initialPromo={initialPromo}
-      showModeToggle={true}
+      showModeToggle={false}
     />
   );
 }
 
-export default function LoginPage() {
+export default function SignupPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-background" />}>
-      <LoginInner />
+      <SignupInner />
     </Suspense>
   );
 }
