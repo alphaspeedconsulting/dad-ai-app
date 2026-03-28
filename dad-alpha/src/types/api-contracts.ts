@@ -611,6 +611,7 @@ export interface Vehicle {
   year: number | null;
   vin: string | null;
   current_mileage: number | null;
+  photo_url: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
@@ -634,6 +635,7 @@ export interface VehicleServiceItem {
   last_performed_mileage: number | null;
   next_due_at: string | null;
   next_due_mileage: number | null;
+  serviced_by: string | null;
   notes: string | null;
   created_at: string;
 }
@@ -644,6 +646,7 @@ export interface VehicleServiceItemCreateRequest {
   last_performed_mileage?: number;
   next_due_at?: string;
   next_due_mileage?: number;
+  serviced_by?: string;
   notes?: string;
 }
 
@@ -663,6 +666,7 @@ export interface HomeProject {
   estimated_cost: number | null;
   area: HomeProjectArea;
   checklist_id: string | null;
+  photo_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -689,6 +693,7 @@ export interface TripPlan {
   end_date: string | null;
   estimated_budget: number | null;
   packing_checklist_id: string | null;
+  photo_url: string | null;
   notes: string | null;
   status: TripStatus;
   created_at: string;

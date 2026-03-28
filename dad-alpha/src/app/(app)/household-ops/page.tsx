@@ -13,6 +13,7 @@ import type {
   HomeProjectCreateRequest,
   AutomationRoutineCreateRequest,
   Vehicle,
+  VehicleServiceItem,
   HomeProject,
   TripPlan,
   AutomationRoutine,
@@ -47,6 +48,97 @@ const AREA_LABELS: Record<HomeProjectArea, string> = {
   yard: "Yard",
   other: "Other",
 };
+
+// ─── Reusable UI Components ──────────────────────────────────────────────────
+
+function StatBox({ icon, value, label, color }: { icon: string; value: string; label: string; color: string }) {
+  return (
+    <div className="dad-card p-3 flex flex-col items-center gap-1 text-center flex-1 min-w-0">
+      <span className={`material-symbols-outlined text-[20px] ${color}`}>{icon}</span>
+      <p className="font-headline text-alphaai-md font-bold text-foreground">{value}</p>
+      <p className="text-alphaai-3xs text-muted-foreground leading-tight">{label}</p>
+    </div>
+  );
+}
+
+function FilterPill({ label, isSelected, onClick }: { label: string; isSelected: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-3 py-1.5 rounded-full text-alphaai-3xs font-medium whitespace-nowrap transition-colors ${
+        isSelected
+          ? "bg-brand text-on-primary"
+          : "bg-surface-container text-muted-foreground hover:text-foreground"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function OpsStatsSummary({
+  vehicles,
+  serviceItems,
+  projects,
+  trips,
+  routines,
+}: {
+  vehicles: Vehicle[];
+  serviceItems: Record<string, VehicleServiceItem[]>;
+  projects: HomeProject[];
+  trips: TripPlan[];
+  routines: AutomationRoutine[];
+}) {
+  const today = new Date().toISOString().split("T")[0];
+
+  const serviceDueCount = Object.values(serviceItems)
+    .flat()
+    .filter((s) => s.next_due_at && s.next_due_at <= today).length;
+
+  const activeProjects = projects.filter(
+    (p) => p.status === "planned" || p.status === "in_progress"
+  );
+  const totalEstCost = activeProjects.reduce((sum, p) => sum + (p.estimated_cost ?? 0), 0);
+
+  const upcomingTrips = trips
+    .filter((t) => t.start_date && t.start_date >= today)
+    .sort((a, b) => (a.start_date ?? "").localeCompare(b.start_date ?? ""));
+  const nextTrip = upcomingTrips[0];
+  const daysUntilTrip = nextTrip?.start_date
+    ? Math.ceil((new Date(nextTrip.start_date).getTime() - Date.now()) / 86400000)
+    : null;
+
+  const activeRoutines = routines.filter((r) => r.is_active);
+
+  return (
+    <div className="grid grid-cols-4 gap-2">
+      <StatBox
+        icon="directions_car"
+        value={String(vehicles.length)}
+        label={serviceDueCount > 0 ? `${serviceDueCount} service due` : "Vehicles"}
+        color={serviceDueCount > 0 ? "text-error" : "text-brand"}
+      />
+      <StatBox
+        icon="home_repair_service"
+        value={String(activeProjects.length)}
+        label={totalEstCost > 0 ? `$${totalEstCost.toLocaleString()}` : "Projects"}
+        color="text-secondary"
+      />
+      <StatBox
+        icon="flight_takeoff"
+        value={nextTrip ? String(daysUntilTrip ?? 0) : String(trips.length)}
+        label={nextTrip ? "days to trip" : "Trips"}
+        color="text-tertiary"
+      />
+      <StatBox
+        icon="routine"
+        value={String(activeRoutines.length)}
+        label="Routines"
+        color="text-brand"
+      />
+    </div>
+  );
+}
 
 function PremiumGate() {
   return (
@@ -86,6 +178,7 @@ function GarageTab({ householdId }: { householdId: string }) {
   const [showForm, setShowForm] = useState(false);
   const [expandedVehicleId, setExpandedVehicleId] = useState<string | null>(null);
   const [form, setForm] = useState<VehicleCreateRequest>({ nickname: "" });
+  const [garageFilter, setGarageFilter] = useState<"all" | "service_due">("all");
 
   useEffect(() => {
     fetchVehicles(householdId);
@@ -120,6 +213,22 @@ function GarageTab({ householdId }: { householdId: string }) {
         </div>
       )}
 
+      {/* Filter pills */}
+      {vehicles.length > 0 && (() => {
+        const today = new Date().toISOString().split("T")[0];
+        const dueCount = vehicles.filter((v) =>
+          (serviceItems[v.id] ?? []).some((s) => s.next_due_at && s.next_due_at <= today)
+        ).length;
+        return (
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+            <FilterPill label={`All (${vehicles.length})`} isSelected={garageFilter === "all"} onClick={() => setGarageFilter("all")} />
+            {dueCount > 0 && (
+              <FilterPill label={`Service Due (${dueCount})`} isSelected={garageFilter === "service_due"} onClick={() => setGarageFilter("service_due")} />
+            )}
+          </div>
+        );
+      })()}
+
       {vehicles.length === 0 && !isLoading && (
         <div className="dad-card p-6 text-center space-y-2">
           <span className="material-symbols-outlined text-[40px] text-muted-foreground">
@@ -131,17 +240,25 @@ function GarageTab({ householdId }: { householdId: string }) {
         </div>
       )}
 
-      {vehicles.map((vehicle: Vehicle) => (
+      {(garageFilter === "all"
+        ? vehicles
+        : vehicles.filter((v) => {
+            const today = new Date().toISOString().split("T")[0];
+            return (serviceItems[v.id] ?? []).some((s) => s.next_due_at && s.next_due_at <= today);
+          })
+      ).map((vehicle: Vehicle) => (
         <div key={vehicle.id} className="dad-card overflow-hidden">
           <button
             onClick={() => handleExpand(vehicle.id)}
             className="w-full p-4 flex items-center gap-3 text-left"
           >
-            <div className="w-10 h-10 bg-brand-glow/20 rounded-xl flex items-center justify-center flex-shrink-0">
-              <span className="material-symbols-outlined text-[20px] text-brand">
-                directions_car
-              </span>
-            </div>
+            {vehicle.photo_url ? (
+              <img src={vehicle.photo_url} alt={vehicle.nickname} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
+            ) : (
+              <div className="w-10 h-10 bg-brand-glow/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                <span className="material-symbols-outlined text-[20px] text-brand">directions_car</span>
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <p className="font-headline text-alphaai-sm font-semibold text-foreground">
                 {vehicle.nickname}
@@ -176,6 +293,9 @@ function GarageTab({ householdId }: { householdId: string }) {
                     >
                       <p className="text-alphaai-xs font-medium text-foreground">
                         {item.service_type}
+                        {item.serviced_by && (
+                          <span className="text-muted-foreground font-normal"> — {item.serviced_by}</span>
+                        )}
                       </p>
                       {item.next_due_at && (
                         <p className="text-alphaai-3xs text-muted-foreground">
@@ -299,6 +419,7 @@ function HomeTab({ householdId }: { householdId: string }) {
 
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<HomeProjectCreateRequest>({ title: "", area: "other" });
+  const [statusFilter, setStatusFilter] = useState<HomeProjectStatus | "all">("all");
 
   useEffect(() => {
     fetchProjects(householdId);
@@ -313,6 +434,13 @@ function HomeTab({ householdId }: { householdId: string }) {
     }
   };
 
+  const filteredProjects = statusFilter === "all"
+    ? projects
+    : projects.filter((p) => p.status === statusFilter);
+
+  const statusCounts = (status: HomeProjectStatus) =>
+    projects.filter((p) => p.status === status).length;
+
   return (
     <div className="space-y-4">
       {error && (
@@ -324,7 +452,26 @@ function HomeTab({ householdId }: { householdId: string }) {
         </div>
       )}
 
-      {projects.length === 0 && !isLoading && (
+      {/* Filter pills */}
+      {projects.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+          <FilterPill label={`All (${projects.length})`} isSelected={statusFilter === "all"} onClick={() => setStatusFilter("all")} />
+          {(["planned", "in_progress", "completed", "on_hold"] as HomeProjectStatus[]).map((s) => {
+            const count = statusCounts(s);
+            if (count === 0) return null;
+            return (
+              <FilterPill
+                key={s}
+                label={`${PROJECT_STATUS_LABELS[s]} (${count})`}
+                isSelected={statusFilter === s}
+                onClick={() => setStatusFilter(s)}
+              />
+            );
+          })}
+        </div>
+      )}
+
+      {filteredProjects.length === 0 && !isLoading && projects.length === 0 && (
         <div className="dad-card p-6 text-center space-y-2">
           <span className="material-symbols-outlined text-[40px] text-muted-foreground">
             home_repair_service
@@ -335,8 +482,12 @@ function HomeTab({ householdId }: { householdId: string }) {
         </div>
       )}
 
-      {projects.map((project: HomeProject) => (
-        <div key={project.id} className="dad-card p-4">
+      {filteredProjects.map((project: HomeProject) => (
+        <div key={project.id} className="dad-card overflow-hidden">
+          {project.photo_url && (
+            <img src={project.photo_url} alt={project.title} className="w-full h-32 object-cover" />
+          )}
+          <div className="p-4">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
               <p className="font-headline text-alphaai-sm font-semibold text-foreground">
@@ -382,6 +533,7 @@ function HomeTab({ householdId }: { householdId: string }) {
             >
               Log expense
             </Link>
+          </div>
           </div>
         </div>
       ))}
@@ -465,6 +617,7 @@ function TripsTab({ householdId }: { householdId: string }) {
 
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<TripPlanCreateRequest>({ destination: "" });
+  const [tripFilter, setTripFilter] = useState<"all" | "planning" | "booked" | "completed">("all");
 
   useEffect(() => {
     fetchTrips(householdId);
@@ -496,6 +649,25 @@ function TripsTab({ householdId }: { householdId: string }) {
         </div>
       )}
 
+      {/* Filter pills */}
+      {trips.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+          <FilterPill label={`All (${trips.length})`} isSelected={tripFilter === "all"} onClick={() => setTripFilter("all")} />
+          {(["planning", "booked", "completed"] as const).map((s) => {
+            const count = trips.filter((t) => t.status === s).length;
+            if (count === 0) return null;
+            return (
+              <FilterPill
+                key={s}
+                label={`${s.charAt(0).toUpperCase() + s.slice(1)} (${count})`}
+                isSelected={tripFilter === s}
+                onClick={() => setTripFilter(s)}
+              />
+            );
+          })}
+        </div>
+      )}
+
       {trips.length === 0 && !isLoading && (
         <div className="dad-card p-6 text-center space-y-2">
           <span className="material-symbols-outlined text-[40px] text-muted-foreground">
@@ -507,8 +679,12 @@ function TripsTab({ householdId }: { householdId: string }) {
         </div>
       )}
 
-      {trips.map((trip: TripPlan) => (
-        <div key={trip.id} className="dad-card p-4">
+      {(tripFilter === "all" ? trips : trips.filter((t) => t.status === tripFilter)).map((trip: TripPlan) => (
+        <div key={trip.id} className="dad-card overflow-hidden">
+          {trip.photo_url && (
+            <img src={trip.photo_url} alt={trip.destination} className="w-full h-32 object-cover" />
+          )}
+          <div className="p-4">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
               <p className="font-headline text-alphaai-sm font-semibold text-foreground">
@@ -551,6 +727,7 @@ function TripsTab({ householdId }: { householdId: string }) {
             >
               Budget
             </Link>
+          </div>
           </div>
         </div>
       ))}
@@ -787,6 +964,7 @@ function HouseholdOpsContent() {
   const searchParams = useSearchParams();
   const user = useAuthStore((s) => s.user);
   const token = useAuthStore((s) => s.token);
+  const { vehicles, serviceItems, projects, trips, routines } = useHouseholdOpsStore();
 
   const [isMounted, setIsMounted] = useState(false);
 
@@ -851,6 +1029,15 @@ function HouseholdOpsContent() {
           </div>
         ) : (
           <>
+            {/* Summary stats */}
+            <OpsStatsSummary
+              vehicles={vehicles}
+              serviceItems={serviceItems}
+              projects={projects}
+              trips={trips}
+              routines={routines}
+            />
+
             {/* Tab bar */}
             <div className="flex bg-surface rounded-2xl p-1 gap-1">
               {TABS.map((tab) => (
