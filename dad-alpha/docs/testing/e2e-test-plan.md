@@ -1,9 +1,78 @@
 # Dad.alpha — End-to-End Test Plan
 
 **Created:** 2026-03-28
+**Updated:** 2026-03-28
 **For:** Claude Cowork holistic E2E testing
-**Deploy URL:** `dad.alphaspeedai.com` (GitHub Pages static export)
-**Backend:** Shared FastAPI at `NEXT_PUBLIC_API_URL` (same as Mom.alpha)
+
+---
+
+## 0. Test Environments
+
+This plan covers **three** test environments. Every test in this document should be run in at least one, and critical flows in all three.
+
+### Local (Mock Mode)
+- **Frontend:** `http://localhost:3000` via `npm run dev`
+- **Backend:** None — `NEXT_PUBLIC_MOCK_MODE=true`
+- **Purpose:** Verify all UI flows work offline with mock data
+- **Start:** `cd dad-alpha && npm run dev`
+
+### Local (Full Stack)
+- **Frontend:** `http://localhost:3000` via `npm run dev`
+- **Backend:** `http://localhost:8000` (FastAPI from `cowork_plugin/platform files/mom_alpha/`)
+- **Config:** Set `NEXT_PUBLIC_MOCK_MODE=false` and `NEXT_PUBLIC_API_URL=http://localhost:8000` in `.env.local`
+- **Purpose:** Verify frontend-backend integration before deployment
+- **Start:** Backend first (`uvicorn`), then frontend (`npm run dev`)
+- **Prerequisite health checks:**
+  - `curl http://localhost:8000/health` → `{"status": "ok"}`
+  - `curl http://localhost:8000/api/agents` → returns agent list
+
+### Production (GitHub Pages + Render)
+- **Frontend:** `https://dad.alphaspeedai.com` (GitHub Pages static export)
+- **Backend:** `https://household-alpha-api.onrender.com` (Render)
+- **CI/CD:** Push to `main` → GitHub Actions builds → deploys `dad-alpha/out/` to Pages
+- **Config:** `NEXT_PUBLIC_API_URL` baked at build time (see `.github/workflows/deploy-pages.yml:42`)
+- **Purpose:** Verify the live deployed experience end-to-end
+- **Prerequisite health checks:**
+  - `curl https://household-alpha-api.onrender.com/health` → `{"status": "ok"}`
+  - `curl https://household-alpha-api.onrender.com/api/agents` → returns agent list
+  - Use `/render-env-health-check PROD` skill for full backend health assessment (DB connections, LLM calls, polling, errors)
+  - Verify `https://dad.alphaspeedai.com` loads (check for `_next/` assets, no 404s)
+
+### Environment Comparison Matrix
+
+| Aspect | Local Mock | Local Full Stack | Production |
+|--------|:---------:|:----------------:|:----------:|
+| Frontend | localhost:3000 | localhost:3000 | dad.alphaspeedai.com |
+| Backend | None (mock) | localhost:8000 | household-alpha-api.onrender.com |
+| Auth | Mock login | Real JWT | Real JWT + Google OAuth |
+| Agents | Mock responses | Real LLM responses | Real LLM responses |
+| Chat persistence | localStorage | localStorage | localStorage |
+| Stripe | Not available | Test mode (pk_test_) | Test or live mode |
+| Push notifications | Not available | Optional | VAPID key configured |
+| Google Calendar | Not available | OAuth flow testable | Full integration |
+| Service worker | Not registered in dev | Not registered in dev | Active (PWA) |
+
+### What to Test Where
+
+| Test Category | Local Mock | Local Full Stack | Production |
+|--------------|:---------:|:----------------:|:----------:|
+| UI rendering, navigation, layout | Required | Optional | Required |
+| Starter prompts, markdown, chat UX | Required | Required | Required |
+| Agent response quality & relevance | Skip | Required | Required |
+| Quick action → real API endpoint | Skip | Required | Required |
+| Mock responses format & content | Required | Skip | Skip |
+| Auth (email signup/login) | Mock only | Required | Required |
+| Auth (Google OAuth) | Skip | Optional | Required |
+| Stripe checkout | Skip | Test mode | Required |
+| Partner invite & join | Skip | Required | Required |
+| Household Ops CRUD | Mock only | Required | Required |
+| Calendar sync (Google) | Skip | Required | Required |
+| Receipt upload (OCR) | Mock only | Required | Required |
+| Push notifications | Skip | Skip | Required |
+| PWA install prompt | Skip | Skip | Required |
+| Offline support (service worker) | Skip | Skip | Required |
+| Performance (load times, TTFB) | Skip | Optional | Required |
+| Error states (backend down) | Required | Required | Monitor |
 
 ---
 
@@ -244,11 +313,206 @@ Set NEXT_PUBLIC_MOCK_MODE=true
 
 ## 8. Performance Expectations
 
-| Metric | Target |
-|--------|--------|
-| Landing page load (static) | < 2s on 3G |
-| Chat message round-trip (mock) | 600-1000ms (simulated delay) |
-| Chat message round-trip (live) | < 3s |
-| Page navigation (client-side) | Instant (SPA routing) |
-| Build output size | Verify `out/` directory < 5MB |
-| Static routes generated | 16 total |
+| Metric | Target | Environment |
+|--------|--------|-------------|
+| Landing page load (static) | < 2s on 3G | Production |
+| Landing page TTFB | < 500ms (GitHub Pages CDN) | Production |
+| Chat message round-trip (mock) | 600-1000ms (simulated delay) | Local Mock |
+| Chat message round-trip (live) | < 3s | Local Full Stack + Production |
+| Page navigation (client-side) | Instant (SPA routing) | All |
+| Build output size | Verify `out/` directory < 5MB | CI/CD |
+| Static routes generated | 16 total | CI/CD |
+| Render backend cold start | < 30s (free tier may sleep) | Production |
+| Render backend warm response | < 500ms for `/health` | Production |
+
+---
+
+## 9. Local Environment Setup & Testing
+
+### Prerequisites
+```bash
+# Frontend
+cd dad-alpha
+npm ci
+cp .env.local.example .env.local  # then edit values
+```
+
+### Mock Mode Testing
+```bash
+# In .env.local, ensure:
+NEXT_PUBLIC_MOCK_MODE=true
+
+npm run dev
+# Open http://localhost:3000
+# All features work offline — no backend needed
+```
+
+**Checklist:**
+- [ ] Landing page renders at `/`
+- [ ] Mock login succeeds (any credentials)
+- [ ] Dashboard shows mock greeting
+- [ ] All 4 agent chats return rich mock responses
+- [ ] Quick actions work (mock mode falls back to chat)
+- [ ] Household Ops loads mock vehicles/projects/trips/routines
+- [ ] Chat persists across page refresh
+- [ ] Clear chat resets to starter prompts
+
+### Full Stack Testing
+```bash
+# In .env.local, set:
+NEXT_PUBLIC_MOCK_MODE=false
+NEXT_PUBLIC_API_URL=http://localhost:8000
+
+# Start backend first (from cowork_plugin repo):
+cd cowork_plugin/platform\ files/mom_alpha
+uvicorn app.main:app --reload --port 8000
+
+# Then frontend:
+cd dad-alpha
+npm run dev
+```
+
+**Backend health check before testing:**
+```bash
+curl http://localhost:8000/health
+curl http://localhost:8000/api/agents
+```
+
+**Checklist:**
+- [ ] Backend `/health` returns `{"status": "ok"}`
+- [ ] Signup creates real user with `parent_brand: "dad"`
+- [ ] Login returns valid JWT
+- [ ] Agent list returns all 4 agents from backend
+- [ ] Chat returns real LLM responses (not mock)
+- [ ] Quick actions call real endpoints (calendar, slips, expenses, lists)
+- [ ] Receipt upload processes image via OCR
+- [ ] Calendar sync pulls from Google Calendar (if OAuth configured)
+- [ ] Household Ops CRUD persists across page refresh (backend state)
+- [ ] Partner invite generates token
+- [ ] Stripe checkout redirects to test payment page
+
+### Unit & Build Verification
+```bash
+npm run test      # 42 unit tests must pass
+npm run build     # Static export must produce 16 routes
+npx tsc --noEmit  # TypeScript must compile clean
+```
+
+---
+
+## 10. Production Testing (GitHub Pages + Render)
+
+### Deployment Pipeline
+```
+Push to main → GitHub Actions → npm ci → npm run build → Upload to Pages → Deploy
+```
+Build injects: `NEXT_PUBLIC_API_URL=https://household-alpha-api.onrender.com`
+
+### Pre-Test: Backend Health (Render)
+Run `/render-env-health-check PROD` skill to verify:
+- [ ] Render service is running (not sleeping / crashed)
+- [ ] Database connections healthy (no idle-in-transaction)
+- [ ] No LLM retry loops or cost amplification
+- [ ] No error clustering in logs
+
+Or manually:
+```bash
+curl https://household-alpha-api.onrender.com/health
+curl https://household-alpha-api.onrender.com/api/agents
+```
+
+**Render free tier note:** The backend may sleep after inactivity. First request can take 30-60s for cold start. Wait for `/health` to respond before testing.
+
+### Pre-Test: Frontend Health (GitHub Pages)
+```bash
+curl -s -o /dev/null -w "%{http_code}" https://dad.alphaspeedai.com
+# Expect: 200
+
+curl -s -o /dev/null -w "%{http_code}" https://dad.alphaspeedai.com/_next/static/css/
+# Expect: 200 (assets served correctly)
+```
+
+### Production Test Checklist
+
+**Landing & Auth:**
+- [ ] `https://dad.alphaspeedai.com` loads — hero section visible, no console errors
+- [ ] "Get Started" CTA navigates to `/signup`
+- [ ] Agent grid shows all 4 agents with icons and descriptions
+- [ ] Pricing section renders tier cards
+- [ ] Email signup works — user created, JWT stored, redirect to dashboard
+- [ ] Google OAuth login works — popup opens, token returned
+- [ ] Consent flow displays ToS, Privacy, AI disclosure — all accepted
+- [ ] `parent_brand: "dad"` confirmed in auth request (Network tab)
+
+**Dashboard:**
+- [ ] Greeting shows correct time-of-day and user name
+- [ ] Sync digest loads (or shows empty state)
+- [ ] Quick action cards link to correct agents
+- [ ] Logout clears token and redirects to login
+
+**Agent Chat (test each of the 4 agents):**
+- [ ] 6 starter prompts render on empty chat
+- [ ] Tap starter prompt → message sent → typing indicator → response
+- [ ] Response contains markdown (tables, lists, bold) rendered correctly
+- [ ] Quick actions appear and call correct API endpoints
+- [ ] Chat persists across page refresh
+- [ ] Clear chat button works
+
+**Household Ops (Family Pro user):**
+- [ ] Non-Pro user sees PremiumGate
+- [ ] Pro user sees stat boxes + tab bar
+- [ ] All 4 tabs functional (Garage, Home, Trips, Routines)
+- [ ] Add/delete items works — persists in backend
+- [ ] Filter pills filter correctly
+- [ ] Agent cross-links open correct chat routes
+
+**Expenses:**
+- [ ] Expense list loads
+- [ ] Receipt upload processes and shows parsed expense
+- [ ] Monthly summary by category renders
+
+**PWA (Production only):**
+- [ ] Service worker registered (`navigator.serviceWorker.controller` exists)
+- [ ] "Add to Home Screen" prompt available on mobile
+- [ ] App opens in standalone mode from home screen
+- [ ] Offline: previously visited pages load from cache
+
+**Push Notifications (Production only):**
+- [ ] Push subscription prompt appears
+- [ ] Subscribing sends subscription to backend
+- [ ] Backend can send push → notification appears
+
+**Performance (Production only):**
+- [ ] Landing page: Lighthouse score > 80 (Performance)
+- [ ] No render-blocking resources in Network waterfall
+- [ ] All static assets served from GitHub Pages CDN
+- [ ] API calls go to `household-alpha-api.onrender.com`
+- [ ] No CORS errors in console
+
+### Production Smoke Test (Quick — run after every deploy)
+A minimal set to confirm the deploy isn't broken:
+1. Load `https://dad.alphaspeedai.com` — page renders
+2. Navigate to `/agents` — 4 agent cards visible
+3. Navigate to `/chat/calendar_whiz` — starter prompts shown
+4. Send "What's on today?" — response received with markdown
+5. Navigate to `/dashboard` — no errors in console
+6. Check Network tab — API calls hit `household-alpha-api.onrender.com`
+
+---
+
+## 11. CI/CD Verification
+
+### GitHub Actions Workflow (`.github/workflows/deploy-pages.yml`)
+On every push to `main`:
+1. `npm ci` in `dad-alpha/`
+2. `npm run build` with `NEXT_PUBLIC_API_URL=https://household-alpha-api.onrender.com`
+3. Touches `.nojekyll` (allows `_next/` directory)
+4. Uploads `dad-alpha/out/` as Pages artifact
+5. Deploys to GitHub Pages
+
+**Verify after deploy:**
+- [ ] GitHub Actions workflow completed (green check)
+- [ ] Pages deployment succeeded (repo Settings → Pages → last deployment)
+- [ ] `https://dad.alphaspeedai.com` serves updated content (check a known change)
+- [ ] No 404s for `_next/static/` assets
+- [ ] API URL correctly baked: inspect `_next/static/chunks/*.js` for `household-alpha-api.onrender.com`
