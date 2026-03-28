@@ -61,9 +61,9 @@ export function AgentGrid() {
 
                   <ul className="mt-3 space-y-1.5">
                     {agent.capabilities.map((c) => (
-                      <li key={c} className="flex items-center gap-2 text-alphaai-xs text-foreground/90">
-                        <span className={`material-symbols-outlined text-[14px] ${style.iconColor}`}>check_circle</span>
-                        {c}
+                      <li key={c.action} className="flex items-center gap-2 text-alphaai-xs text-foreground/90">
+                        <span className={`material-symbols-outlined text-[14px] ${style.iconColor}`}>{c.icon}</span>
+                        {c.label}
                       </li>
                     ))}
                   </ul>

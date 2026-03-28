@@ -1,8 +1,12 @@
 "use client";
 
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import type { AgentType, QuickAction } from "@/types/api-contracts";
 import * as api from "@/lib/api-client";
+import { getMockChatResponse } from "@/lib/mock-chat-responses";
+
+const isMockMode = process.env.NEXT_PUBLIC_MOCK_MODE === "true";
 
 interface ChatMessage {
   id: string;
@@ -20,7 +24,19 @@ interface ChatState {
   clearChat: (agentType: AgentType) => void;
 }
 
-export const useChatStore = create<ChatState>()((set) => ({
+const MAX_MESSAGES_PER_AGENT = 50;
+
+function trimMessages(messages: Record<string, ChatMessage[]>): Record<string, ChatMessage[]> {
+  const trimmed: Record<string, ChatMessage[]> = {};
+  for (const [key, msgs] of Object.entries(messages)) {
+    trimmed[key] = msgs.slice(-MAX_MESSAGES_PER_AGENT);
+  }
+  return trimmed;
+}
+
+export const useChatStore = create<ChatState>()(
+  persist(
+    (set) => ({
   messages: {},
   isTyping: false,
 
@@ -39,7 +55,11 @@ export const useChatStore = create<ChatState>()((set) => ({
     }));
 
     try {
-      const response = await api.chat.send({ household_id: householdId, agent_type: agentType, message });
+      const response = isMockMode
+        ? await new Promise<Awaited<ReturnType<typeof api.chat.send>>>((resolve) =>
+            setTimeout(() => resolve(getMockChatResponse(agentType, message)), 600 + Math.random() * 400)
+          )
+        : await api.chat.send({ household_id: householdId, agent_type: agentType, message });
       const agentMsg: ChatMessage = {
         id: response.message_id,
         role: "agent",
@@ -71,4 +91,10 @@ export const useChatStore = create<ChatState>()((set) => ({
 
   clearChat: (agentType) =>
     set((state) => ({ messages: { ...state.messages, [agentType]: [] } })),
-}));
+}),
+    {
+      name: "dad-alpha-chat",
+      partialize: (state) => ({ messages: trimMessages(state.messages) }),
+    },
+  ),
+);

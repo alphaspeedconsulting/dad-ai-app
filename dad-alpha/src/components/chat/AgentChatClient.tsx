@@ -2,10 +2,14 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { marked } from "marked";
+import DOMPurify from "dompurify";
 import { useChatStore } from "@/stores/chat-store";
 import { useAgentsStore } from "@/stores/agents-store";
 import { useAuthStore } from "@/stores/auth-store";
 import { useVoiceInput } from "@/hooks/use-voice-input";
+import { DAD_AGENTS } from "@/config/dad-agents";
+import * as api from "@/lib/api-client";
 import type { AgentType, QuickAction } from "@/types/api-contracts";
 
 const isMockMode = process.env.NEXT_PUBLIC_MOCK_MODE === "true";
@@ -19,7 +23,7 @@ const MOCK_AGENTS = [
 
 export function AgentChatClient({ agentType }: { agentType: AgentType }) {
   const router = useRouter();
-  const { messages, isTyping, sendMessage } = useChatStore();
+  const { messages, isTyping, sendMessage, clearChat } = useChatStore();
   const { agents, fetchAgents } = useAgentsStore();
   const householdId = useAuthStore((s) => s.user?.household_id);
   const tier = useAuthStore((s) => s.user?.tier);
@@ -32,6 +36,7 @@ export function AgentChatClient({ agentType }: { agentType: AgentType }) {
     if (transcript) { setInput(transcript); clearTranscript(); }
   }, [transcript, clearTranscript]);
 
+  const dadAgent = DAD_AGENTS.find((a) => a.agent_type === agentType);
   const mockAgent = MOCK_AGENTS.find((a) => a.agent_type === agentType);
   const agent = agents.find((a) => a.agent_type === agentType) ?? (isMockMode ? mockAgent as any : undefined);
   const chatMessages = messages[agentType] || [];
@@ -51,8 +56,124 @@ export function AgentChatClient({ agentType }: { agentType: AgentType }) {
     setInput("");
   };
 
-  const handleQuickAction = (action: QuickAction) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const appendAgentMessage = (content: string, quickActions?: QuickAction[]) => {
+    const msg = {
+      id: `msg_${Date.now()}_action`,
+      role: "agent" as const,
+      content,
+      agent_type: agentType,
+      quick_actions: quickActions,
+      timestamp: new Date().toISOString(),
+    };
+    useChatStore.setState((state) => ({
+      messages: {
+        ...state.messages,
+        [agentType]: [...(state.messages[agentType] || []), msg],
+      },
+    }));
+  };
+
+  const handleQuickAction = async (action: QuickAction) => {
     if (!householdId) return;
+
+    // In mock mode or for unknown actions, fall back to sending as chat message
+    if (isMockMode) {
+      sendMessage(agentType, action.label, householdId);
+      return;
+    }
+
+    try {
+      switch (action.action) {
+        case "sign_slip": {
+          const slipId = action.payload?.slip_id as string;
+          if (!slipId) break;
+          const slip = await api.slips.sign(slipId);
+          appendAgentMessage(`**Permission slip signed!** "${slip.title}" is now marked as signed.`);
+          return;
+        }
+        case "create_event": {
+          const title = action.payload?.title as string;
+          if (!title) break;
+          await api.calendar.create({
+            title,
+            start_at: new Date().toISOString(),
+            end_at: new Date(Date.now() + 3600000).toISOString(),
+          });
+          appendAgentMessage(`**Event created:** "${title}" has been added to your calendar.`);
+          return;
+        }
+        case "add_to_list": {
+          const text = action.payload?.text as string;
+          if (!text) break;
+          await api.lists.addItem(householdId, agentType, text);
+          appendAgentMessage(`**Added to list:** "${text}"`);
+          return;
+        }
+        case "sync_google": {
+          const result = await api.calendar.syncGoogle();
+          appendAgentMessage(`**Calendar synced!** ${result.synced} events imported from Google Calendar.`);
+          return;
+        }
+        case "upload_receipt": {
+          fileInputRef.current?.click();
+          return;
+        }
+        case "view_budget": {
+          const [budget, summary] = await Promise.all([
+            api.budget.get(householdId),
+            api.expenses.summary(householdId),
+          ]);
+          const pct = Math.round((budget.used / budget.limit) * 100);
+          appendAgentMessage(
+            `**Budget status:** $${budget.used} of $${budget.limit} used (${pct}%)\n\n` +
+            `**Trend:** ${summary.trend === "up" ? "Spending is up" : summary.trend === "down" ? "Spending is down" : "Spending is stable"} this month.\n\n` +
+            `**Monthly total:** $${summary.total_month}`
+          );
+          return;
+        }
+        case "view_conflicts": {
+          const conflicts = await api.calendar.conflicts(householdId);
+          if (conflicts.length === 0) {
+            appendAgentMessage("No calendar conflicts found. You're all clear!");
+          } else {
+            const rows = conflicts.map(
+              (c) => `| ${c.date} | ${c.event_a.title} (${c.event_a.parent}) | ${c.event_b.title} (${c.event_b.parent}) | ${c.severity} |`
+            );
+            appendAgentMessage(
+              `**${conflicts.length} conflict(s) found:**\n\n| Date | Event A | Event B | Type |\n|------|---------|---------|------|\n${rows.join("\n")}`
+            );
+          }
+          return;
+        }
+        case "toggle_item": {
+          const itemId = action.payload?.item_id as string;
+          if (!itemId) break;
+          await api.lists.toggleItem(householdId, itemId);
+          appendAgentMessage("Item updated.");
+          return;
+        }
+        case "view_expenses": {
+          const summary = await api.expenses.summary(householdId);
+          const categories = Object.entries(summary.by_category)
+            .map(([cat, amount]) => `| ${cat} | $${amount} |`)
+            .join("\n");
+          appendAgentMessage(
+            `**Expense breakdown:**\n\n| Category | Amount |\n|----------|--------|\n${categories}\n\n**Total:** $${summary.total_month}`
+          );
+          return;
+        }
+        default:
+          break;
+      }
+    } catch (e) {
+      const detail = e instanceof api.ApiError ? e.detail : "Something went wrong";
+      appendAgentMessage(`Sorry, that action failed: ${detail}. Please try again.`);
+      return;
+    }
+
+    // Fallback: send as regular chat message
     sendMessage(agentType, action.label, householdId);
   };
 
@@ -79,6 +200,15 @@ export function AgentChatClient({ agentType }: { agentType: AgentType }) {
                 <h1 className="font-headline text-alphaai-base font-semibold text-foreground truncate">{agent.name}</h1>
                 <p className="text-alphaai-3xs text-muted-foreground">{isTyping ? "Thinking..." : "Online"}</p>
               </div>
+              {chatMessages.length > 0 && (
+                <button
+                  onClick={() => clearChat(agentType)}
+                  className="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center"
+                  title="Clear chat"
+                >
+                  <span className="material-symbols-outlined text-[18px] text-muted-foreground">delete_sweep</span>
+                </button>
+              )}
             </>
           )}
         </div>
@@ -93,7 +223,7 @@ export function AgentChatClient({ agentType }: { agentType: AgentType }) {
             <h2 className="font-headline text-alphaai-lg font-semibold text-foreground mb-2">{agent?.name ?? "Agent"}</h2>
             <p className="text-alphaai-sm text-muted-foreground max-w-xs">{agent?.description ?? "How can I help you today?"}</p>
             <div className="flex flex-wrap gap-2 mt-6 justify-center">
-              {getStarterPrompts(agentType).map((prompt) => (
+              {(dadAgent?.starter_prompts ?? ["How can you help?", "What can you do?"]).map((prompt) => (
                 <button
                   key={prompt}
                   onClick={() => householdId && sendMessage(agentType, prompt, householdId)}
@@ -154,6 +284,32 @@ export function AgentChatClient({ agentType }: { agentType: AgentType }) {
         )}
       </main>
 
+      {/* Hidden file input for receipt upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={async (e) => {
+          const file = e.target.files?.[0];
+          if (!file || !householdId) return;
+          e.target.value = "";
+          try {
+            if (isMockMode) {
+              appendAgentMessage("**Receipt scanned!** (Mock mode — no file uploaded)\n\nIn production, this would process your receipt and extract expense details.");
+              return;
+            }
+            const expense = await api.expenses.uploadReceipt(householdId, file);
+            appendAgentMessage(
+              `**Receipt uploaded!**\n\n- **Amount:** $${expense.amount}\n- **Category:** ${expense.category}\n- **Merchant:** ${expense.merchant ?? "Unknown"}\n- **Date:** ${expense.date}`
+            );
+          } catch (err) {
+            const detail = err instanceof api.ApiError ? err.detail : "Upload failed";
+            appendAgentMessage(`Sorry, receipt upload failed: ${detail}`);
+          }
+        }}
+      />
+
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/90 backdrop-blur-2xl border-t border-border-subtle/10 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
         <div className="max-w-lg mx-auto flex items-end gap-2">
           <textarea
@@ -188,23 +344,8 @@ export function AgentChatClient({ agentType }: { agentType: AgentType }) {
 }
 
 function renderMarkdown(content: string): React.ReactNode {
-  const lines = content.split("\n");
-  return lines.map((line, i) => {
-    const isLast = i === lines.length - 1;
-    const parts = line.split(/(\*\*[^*]+\*\*)/g);
-    const rendered = parts.map((part, j) =>
-      part.startsWith("**") && part.endsWith("**") ? <strong key={j}>{part.slice(2, -2)}</strong> : part
-    );
-    return <span key={i}>{rendered}{!isLast && <br />}</span>;
-  });
+  const raw = marked.parse(content, { async: false }) as string;
+  const clean = DOMPurify.sanitize(raw, { USE_PROFILES: { html: true } });
+  return <div className="agent-markdown" dangerouslySetInnerHTML={{ __html: clean }} />;
 }
 
-function getStarterPrompts(agentType: string): string[] {
-  const prompts: Record<string, string[]> = {
-    calendar_whiz: ["What's on today?", "Check for conflicts", "Sync calendars"],
-    grocery_guru: ["Show grocery list", "Plan meals", "Add item"],
-    budget_buddy: ["Monthly spending?", "Scan a receipt", "Recurring bills"],
-    school_event_hub: ["Pending permission slips", "School events this week", "Check deadlines"],
-  };
-  return prompts[agentType] ?? ["How can you help?", "What can you do?"];
-}

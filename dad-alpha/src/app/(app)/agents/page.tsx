@@ -31,9 +31,10 @@ export default function AgentsPage() {
               </h3>
               <p className="text-alphaai-xs text-muted-foreground truncate">{agent.description}</p>
               <div className="flex gap-1.5 mt-1.5 flex-wrap">
-                {agent.capabilities.slice(0, 2).map((c) => (
-                  <span key={c} className="text-alphaai-3xs bg-brand-glow/20 text-brand px-2 py-0.5 rounded-full">
-                    {c}
+                {agent.capabilities.slice(0, 3).map((c) => (
+                  <span key={c.action} className="text-alphaai-3xs bg-brand-glow/20 text-brand px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[12px]">{c.icon}</span>
+                    {c.label}
                   </span>
                 ))}
               </div>
