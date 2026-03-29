@@ -1,7 +1,7 @@
 # Dad.alpha — End-to-End Test Plan
 
 **Created:** 2026-03-28
-**Updated:** 2026-03-28
+**Updated:** 2026-03-29
 **For:** Claude Cowork holistic E2E testing
 
 ---
@@ -160,20 +160,23 @@ Dad.alpha is a Next.js 16 PWA with `output: "export"` — fully static, no serve
 Landing (/) → "Get Started" CTA → /signup
 → Enter name + email + password → Submit
 → Consent screen (ToS, Privacy, AI disclosure) → Accept all
+→ consentApi.accept() called with ConsentRequest (terms_of_service, privacy_policy, ai_disclosure docs)
 → Redirect to /dashboard
 → Dashboard shows greeting with user name
 → Empty state prompts to set up household
 ```
-**Verify:** localStorage has `dad-alpha-auth` with user data. `parent_brand: "dad"` in auth payload.
+**Verify:** localStorage has `dad-alpha-auth` with user data. `parent_brand: "dad"` in auth payload. Network tab shows POST to consent endpoint with proper ConsentRequest body containing `terms_of_service`, `privacy_policy`, and `ai_disclosure` document types.
 
 ### Flow 2: Google OAuth Login
 ```
 /login → Click "Sign in with Google"
 → Google OAuth popup → Select account
 → Backend returns AuthResponse with JWT
+→ Consent screen → consentApi.accept() called
 → Redirect to /dashboard
 ```
 **Verify:** Token stored, user object populated, household_id present or null.
+**Local dev note:** When `GOOGLE_CLIENT_ID` env var is not set, the Google sign-in button is disabled and visually dimmed with hint text explaining it is not configured. Verify the button is not clickable and no confusing error appears on click.
 
 ### Flow 3: Agent Chat Conversation
 ```
@@ -187,6 +190,30 @@ Landing (/) → "Get Started" CTA → /signup
 → Tap clear chat button (trash icon) → Chat emptied → Starter prompts return
 ```
 **Verify:** Messages persist on page refresh (localStorage). Markdown tables render with borders. Quick actions call correct endpoints.
+
+**Dashboard quick actions (6 in 3x2 grid):**
+- Schedule Sync → `/chat/calendar_whiz`
+- Grocery List → `/chat/grocery_guru`
+- Expenses → `/expenses`
+- School Hub → `/chat/school_event_hub`
+- Checklists → `/checklists`
+- House Ops → `/household-ops`
+
+**Dashboard links to agent chats:**
+- "Resolve with Schedule Sync" button → `/chat/calendar_whiz`
+- "Full view" on weekly plan → `/chat/calendar_whiz`
+- Partner sync items: soccer practice → `/chat/calendar_whiz`, grocery list → `/chat/grocery_guru`, permission slip → `/chat/school_event_hub`
+- Activity feed items link to relevant agent chats
+
+**Context query params:**
+```
+/chat/calendar_whiz?context=vehicle:123 → Auto-sends contextual opening message about vehicle 123
+/chat/grocery_guru?context=trip:456 → Auto-sends contextual opening message about trip 456
+```
+Links from household-ops and other pages pass `?context=` query params. When present, `AgentChatClient` reads the param and auto-sends a contextual opening message. Verify the message appears in the chat without user action.
+
+**Cross-agent navigation:**
+`AgentChatClient` uses `key={agent}` prop to force full remount when navigating between different agent chats, preventing stale state from the previous agent. Test by navigating directly from `/chat/calendar_whiz` to `/chat/grocery_guru` and verifying the chat resets to the correct agent's starter prompts (no leftover messages from the previous agent).
 
 ### Flow 4: Household Ops Full CRUD
 ```
@@ -271,6 +298,8 @@ Set NEXT_PUBLIC_MOCK_MODE=true
 - Token passed as `Authorization: Bearer <token>` header on all API calls
 - If no token, protected routes redirect to `/login?mode=signup`
 - `parent_brand: "dad"` injected on all auth calls
+- Consent flow calls `consentApi.accept()` with a `ConsentRequest` containing `terms_of_service`, `privacy_policy`, and `ai_disclosure` document types
+- Google OAuth button is disabled and dimmed with hint text when `GOOGLE_CLIENT_ID` is not set (no confusing error on click)
 
 ### Responsive Design
 - Max container width: `max-w-lg` (32rem / 512px)
@@ -282,6 +311,24 @@ Set NEXT_PUBLIC_MOCK_MODE=true
 - Service worker at `/sw.js`
 - Web app manifest for "Add to Home Screen"
 - VAPID push notification support
+- Branded icons: alpha symbol with cyan gradient on dark background, "DAD" label (icon-192.png, icon-512.png, favicon)
+
+### Mock Mode Response Validation
+
+Mock chat responses use keyword-matched selection (not simple round-robin cycling). Each agent has 5-6 responses with keyword arrays. The `findBestResponse()` function scores keyword hits against the user's message and returns the best match, falling back to cycling through non-help responses if no keywords match.
+
+| Agent | Response Count | Selection Method | Fallback |
+|-------|:--------------:|-----------------|----------|
+| `calendar_whiz` (Schedule Sync) | 5-6 | Keyword-matched via `findBestResponse()` | Cycle through non-help responses |
+| `school_event_hub` (School Hub) | 5-6 | Keyword-matched via `findBestResponse()` | Cycle through non-help responses |
+| `budget_buddy` (Expense Tracker) | 5-6 | Keyword-matched via `findBestResponse()` | Cycle through non-help responses |
+| `grocery_guru` (Grocery Planner) | 5-6 | Keyword-matched via `findBestResponse()` | Cycle through non-help responses |
+| Unknown agent type | N/A | N/A | Clear error message (not calendar fallback) |
+
+**Test scenarios:**
+- Send a message with keywords matching a specific response (e.g., "conflict" to calendar_whiz) and verify the keyword-matched response is returned
+- Send a generic message with no keyword matches and verify the fallback cycling behavior
+- Navigate to an invalid agent URL and verify a clear error message is returned (not calendar responses)
 
 ### Markdown Rendering
 - Agent responses rendered via `marked` + `DOMPurify`
@@ -293,6 +340,7 @@ Set NEXT_PUBLIC_MOCK_MODE=true
 - Messages stored in `dad-alpha-chat` localStorage
 - Max 50 messages per agent (oldest trimmed)
 - Clear chat button in header resets per-agent
+- Cross-agent isolation: `AgentChatClient` uses `key={agent}` to force full remount on agent navigation, preventing stale state bleed between agents
 
 ---
 
@@ -322,7 +370,7 @@ Set NEXT_PUBLIC_MOCK_MODE=true
 | Page navigation (client-side) | Instant (SPA routing) | All |
 | Build output size | Verify `out/` directory < 5MB | CI/CD |
 | Static routes generated | 16 total | CI/CD |
-| Render backend cold start | < 30s (free tier may sleep) | Production |
+| Render backend cold start | < 10s (starter tier, no sleep) | Production |
 | Render backend warm response | < 500ms for `/health` | Production |
 
 ---
@@ -351,7 +399,7 @@ npm run dev
 - [ ] Landing page renders at `/`
 - [ ] Mock login succeeds (any credentials)
 - [ ] Dashboard shows mock greeting
-- [ ] All 4 agent chats return rich mock responses
+- [ ] All 4 agent chats return keyword-matched mock responses (5-6 per agent)
 - [ ] Quick actions work (mock mode falls back to chat)
 - [ ] Household Ops loads mock vehicles/projects/trips/routines
 - [ ] Chat persists across page refresh
@@ -421,7 +469,7 @@ curl https://household-alpha-api.onrender.com/health
 curl https://household-alpha-api.onrender.com/api/agents
 ```
 
-**Render free tier note:** The backend may sleep after inactivity. First request can take 30-60s for cold start. Wait for `/health` to respond before testing.
+**Render starter tier note:** The backend is on the Render starter plan (not free tier). Cold starts should be minimal, but verify `/health` responds before testing.
 
 ### Pre-Test: Frontend Health (GitHub Pages)
 ```bash
@@ -447,7 +495,12 @@ curl -s -o /dev/null -w "%{http_code}" https://dad.alphaspeedai.com/_next/static
 **Dashboard:**
 - [ ] Greeting shows correct time-of-day and user name
 - [ ] Sync digest loads (or shows empty state)
-- [ ] Quick action cards link to correct agents
+- [ ] 6 quick actions in 3x2 grid: Schedule Sync, Grocery List, Expenses, School Hub, Checklists, House Ops
+- [ ] Quick action cards link to correct routes (agent chats, /expenses, /checklists, /household-ops)
+- [ ] "Resolve with Schedule Sync" links to `/chat/calendar_whiz`
+- [ ] "Full view" on weekly plan links to `/chat/calendar_whiz`
+- [ ] Partner sync items are clickable Links to correct agent chats
+- [ ] Activity feed items are clickable Links to relevant agent chats
 - [ ] Logout clears token and redirects to login
 
 **Agent Chat (test each of the 4 agents):**
@@ -476,6 +529,8 @@ curl -s -o /dev/null -w "%{http_code}" https://dad.alphaspeedai.com/_next/static
 - [ ] "Add to Home Screen" prompt available on mobile
 - [ ] App opens in standalone mode from home screen
 - [ ] Offline: previously visited pages load from cache
+- [ ] PWA icons show branded alpha symbol with cyan gradient and "DAD" label (not blank blue square)
+- [ ] Favicon matches branded icon in browser tab
 
 **Push Notifications (Production only):**
 - [ ] Push subscription prompt appears

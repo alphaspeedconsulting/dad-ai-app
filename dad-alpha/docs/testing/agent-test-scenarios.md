@@ -1,6 +1,7 @@
 # Dad.alpha — Agent Test Scenarios
 
 **Created:** 2026-03-28
+**Updated:** 2026-03-29
 **For:** Claude Cowork agent quality testing
 **Agents:** 4 MVP agents defined in `src/config/dad-agents.ts`
 
@@ -15,7 +16,7 @@ Each agent is a chat interface at `/chat/{agent_type}`. The frontend:
 4. Renders markdown via `marked` + `DOMPurify`
 5. Quick actions either call real API endpoints (smart dispatch) or fall back to chat
 
-In mock mode, responses come from `src/lib/mock-chat-responses.ts` with 600-1000ms delay.
+In mock mode, responses come from `src/lib/mock-chat-responses.ts` with 600-1000ms delay. Responses are keyword-matched against the user's message — each mock response has a `keywords` array, and the system scores keyword hits to return the best match. When no keywords match, responses cycle through non-help entries as a fallback.
 
 ---
 
@@ -205,7 +206,7 @@ These test behaviors shared across all agents.
 | Test | Steps | Expected |
 |------|-------|----------|
 | Refresh persistence | Send message → Refresh page | Messages still visible |
-| Cross-agent isolation | Send message in calendar_whiz → Go to budget_buddy | Budget buddy chat is separate |
+| Cross-agent isolation | Send message in calendar_whiz → Go to budget_buddy | Budget buddy chat is separate. `key={agent}` prop on AgentChatClient forces full React remount, guaranteeing isolation at the component level. |
 | Clear chat | Tap trash icon in header | Chat emptied, starter prompts return |
 | 50-message limit | Send 55 messages | Oldest 5 trimmed, newest 50 remain |
 
@@ -228,16 +229,59 @@ These test behaviors shared across all agents.
 
 ## 6. Mock Mode Response Validation
 
-When `NEXT_PUBLIC_MOCK_MODE=true`, every agent should return rich responses. Validate against `src/lib/mock-chat-responses.ts`:
+When `NEXT_PUBLIC_MOCK_MODE=true`, every agent should return rich responses. Validate against `src/lib/mock-chat-responses.ts`. Each response has a `keywords` array used for matching.
 
-| Agent | Response 1 | Response 2 |
-|-------|-----------|-----------|
-| calendar_whiz | Schedule table with 4 events + conflict warning | Week-at-a-glance bullet list + oil change alert |
-| school_event_hub | 2 pending permission slips with fees + sign actions | School events table with 4 events |
-| budget_buddy | March spending summary table (5 categories) + overage warning | Receipt scan result with itemized list |
-| grocery_guru | Current grocery list with checkboxes (8 items) | Meal plan (Mon-Fri) with 12 items added |
+### calendar_whiz (6 responses)
 
-**Cycling behavior:** Repeated messages alternate between Response 1 and Response 2 per agent.
+| # | Response | Trigger Keywords |
+|---|---------|-----------------|
+| 1 | Today's schedule — table with Time, Event, Who columns | today, schedule, what's on |
+| 2 | Weekly overview — day-by-day bullet list Mon-Fri | week, weekly, look like |
+| 3 | Conflict detection — conflict list with warning | conflict, overlap, clash |
+| 4 | Sync confirmation — "X events imported from Google Calendar" | sync, calendar, google |
+| 5 | Vehicle service status — service due items with dates/mileage | vehicle, service, oil, car |
+| 6 | Help/capabilities — lists what the agent can do | help, what can you do |
+
+### school_event_hub (4 responses)
+
+| # | Response | Trigger Keywords |
+|---|---------|-----------------|
+| 1 | Pending permission slips with fees + sign actions | permission, slip, sign |
+| 2 | School events table with dates and notes | event, school, week |
+| 3 | Upcoming deadlines and outstanding fees | deadline, due, fee |
+| 4 | Help/capabilities — lists what the agent can do | help, what can you do |
+
+### budget_buddy (6 responses)
+
+| # | Response | Trigger Keywords |
+|---|---------|-----------------|
+| 1 | Monthly spending summary table (5 categories) + overage warning | monthly, spending, budget, summary |
+| 2 | Receipt scan prompt or parsed result | receipt, scan, upload |
+| 3 | Recurring bills list with amounts + frequency | recurring, bill, subscription |
+| 4 | Grocery spending breakdown by store/week | grocery, groceries, food spending |
+| 5 | Home project cost summary with linked expenses | home, project, renovation, repair |
+| 6 | Help/capabilities — lists what the agent can do | help, what can you do |
+
+### grocery_guru (5 responses)
+
+| # | Response | Trigger Keywords |
+|---|---------|-----------------|
+| 1 | Current grocery list with checkboxes (8 items) | list, what's on, current |
+| 2 | Meal plan (Mon-Fri) with items added to list | meal, plan, week |
+| 3 | Add item prompt — "What would you like to add?" | add, item, need |
+| 4 | Taco recipe with ingredient shopping list | taco, recipe, stuff for |
+| 5 | Help/capabilities — lists what the agent can do | help, what can you do |
+
+### Keyword matching behavior
+
+- The system scores each response's `keywords` array against the user's message text.
+- The response with the most keyword hits wins.
+- When no keywords match (score = 0), responses cycle through non-help entries in order.
+- Help/capabilities responses only trigger on explicit help-related keywords.
+
+### Quick actions in mock mode
+
+Quick actions still send their label as a regular chat message (`sendMessage(agentType, action.label, householdId)`), but because responses are now keyword-matched, the correct response is returned. For example, clicking "Plan meals" matches the meal plan response's keywords and returns the meal plan — not an arbitrary round-robin result.
 
 ---
 
@@ -252,3 +296,22 @@ Route: `/agents`
 | 3 capabilities shown per card | First 3 of each agent's capabilities array |
 | Tap card navigates to chat | `/chat/{agent_type}` |
 | Agent order matches config | calendar_whiz, school_event_hub, budget_buddy, grocery_guru |
+
+---
+
+## 8. Context-Aware Chat Entry
+
+AgentChatClient reads `?context=` query params from the URL. When a user navigates from household-ops (or another page) to a chat with context, an opening message is automatically sent containing information about what the user came from.
+
+**Example URL:** `/chat/calendar_whiz?context=vehicle:123`
+
+### Test Cases
+
+| # | Test | Steps | Expected |
+|---|------|-------|----------|
+| 1 | Context param triggers opening message | Navigate to `/chat/calendar_whiz?context=vehicle:123` | An auto-sent message appears referencing the vehicle context; agent responds with relevant vehicle info |
+| 2 | No context param — normal behavior | Navigate to `/chat/calendar_whiz` (no query param) | No auto-sent message; starter prompts display as usual |
+| 3 | Context with budget agent | Navigate to `/chat/budget_buddy?context=project:kitchen-reno` | Opening message references the kitchen renovation project; agent responds with relevant cost info |
+| 4 | Context cleared after use | Navigate with context → send follow-up message | Follow-up message is a normal chat message, not context-prefixed |
+| 5 | Context on page refresh | Navigate with context → refresh page | Context should not re-trigger (consumed on first mount) |
+| 6 | Context with school hub | Navigate to `/chat/school_event_hub?context=slip:456` | Opening message references the permission slip; agent responds with slip details |

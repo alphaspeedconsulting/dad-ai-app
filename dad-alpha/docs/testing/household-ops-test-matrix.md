@@ -1,6 +1,7 @@
 # Dad.alpha — Household Ops Test Matrix
 
 **Created:** 2026-03-28
+**Updated:** 2026-03-29
 **For:** Claude Cowork testing of `/household-ops` page
 **Tier requirement:** `family_pro` only
 **Reference:** `src/app/(app)/household-ops/page.tsx`, `src/stores/household-ops-store.ts`
@@ -86,6 +87,9 @@ The summary shows 4 stat boxes above the tab bar. Stats are computed client-side
 | Service due date | Item with `next_due_at` | "Next due: 2026-06-01 or 36,000 mi" |
 | Agent cross-links | Expand vehicle | "Add to calendar" links to `/chat/calendar_whiz?context=vehicle:{id}` |
 | Log expense link | Expand vehicle | "Log expense" links to `/chat/budget_buddy?context=vehicle:{id}` |
+| Calendar context auto-message | Tap "Add to calendar" on vehicle | Chat opens with auto-sent message: "I'm looking at vehicle {id} — what's the upcoming service schedule?" |
+| Expense context auto-message | Tap "Log expense" on vehicle | Chat opens with auto-sent message: "Show me expenses for vehicle {id}" |
+| Context param in URL | Navigate via vehicle cross-link | URL contains `?context=vehicle:{id}` and agent responds with vehicle-relevant info |
 
 ### Garage Filter Pills
 
@@ -116,6 +120,8 @@ The summary shows 4 stat boxes above the tab bar. Stats are computed client-side
 | No photo | Project with `photo_url: null` | No banner, card starts with content |
 | Checklist link | Card footer | "Checklist" links to `/checklists?context=project:{id}` |
 | Log expense link | Card footer | "Log expense" links to `/chat/budget_buddy?context=project:{id}` |
+| Project expense context auto-message | Tap "Log expense" on project | Chat opens with auto-sent message: "What are the costs for home project {id}?" |
+| Project context param in URL | Navigate via project cross-link | URL contains `?context=project:{id}` and agent responds with project-relevant info |
 
 ### Home Filter Pills
 
@@ -146,6 +152,9 @@ The summary shows 4 stat boxes above the tab bar. Stats are computed client-side
 | Calendar link | Card footer | "Add to calendar" → `/chat/calendar_whiz?context=trip:{id}` |
 | Packing list link | Card footer | "Packing list" → `/checklists?context=trip:{id}` |
 | Budget link | Card footer | "Budget" → `/chat/budget_buddy?context=trip:{id}` |
+| Trip calendar context auto-message | Tap "Add to calendar" on trip | Chat opens with auto-sent message: "Help me plan dates for trip {id}" |
+| Trip budget context auto-message | Tap "Budget" on trip | Chat opens with auto-sent message: "What's the budget for trip {id}?" |
+| Trip context param in URL | Navigate via trip cross-link | URL contains `?context=trip:{id}` and agent responds with trip-relevant info |
 
 ### Trip Filter Pills
 
@@ -214,13 +223,43 @@ All tabs should work fully in mock mode (`NEXT_PUBLIC_MOCK_MODE=true`):
 
 ## 10. Cross-Feature Integration
 
+### Agent Context Params (added 2026-03-29)
+
+AgentChatClient now reads the `?context=` query param and auto-sends a contextual opening message instead of showing generic starter prompts.
+
+| Context Param | Agent | Auto-sent Message |
+|---------------|-------|-------------------|
+| `vehicle:{id}` | calendar_whiz | "I'm looking at vehicle {id} — what's the upcoming service schedule?" |
+| `vehicle:{id}` | budget_buddy | "Show me expenses for vehicle {id}" |
+| `project:{id}` | budget_buddy | "What are the costs for home project {id}?" |
+| `trip:{id}` | calendar_whiz | "Help me plan dates for trip {id}" |
+| `trip:{id}` | budget_buddy | "What's the budget for trip {id}?" |
+
+### Cross-Link Navigation
+
 | Test | Steps | Expected |
 |------|-------|----------|
-| Vehicle → Calendar agent | Expand vehicle → "Add to calendar" | Opens calendar_whiz chat with vehicle context |
-| Vehicle → Budget agent | Expand vehicle → "Log expense" | Opens budget_buddy chat with vehicle context |
+| Vehicle → Calendar agent | Expand vehicle → "Add to calendar" | Opens calendar_whiz chat; URL has `?context=vehicle:{id}`; context message auto-sent; agent responds with vehicle-relevant info |
+| Vehicle → Budget agent | Expand vehicle → "Log expense" | Opens budget_buddy chat; URL has `?context=vehicle:{id}`; context message auto-sent; agent responds with vehicle-relevant info |
 | Project → Checklists | Project card → "Checklist" | Opens checklists page with project context |
-| Project → Budget agent | Project card → "Log expense" | Opens budget_buddy chat with project context |
-| Trip → Calendar agent | Trip card → "Add to calendar" | Opens calendar_whiz chat with trip context |
+| Project → Budget agent | Project card → "Log expense" | Opens budget_buddy chat; URL has `?context=project:{id}`; context message auto-sent; agent responds with project-relevant info |
+| Trip → Calendar agent | Trip card → "Add to calendar" | Opens calendar_whiz chat; URL has `?context=trip:{id}`; context message auto-sent; agent responds with trip-relevant info |
 | Trip → Checklists | Trip card → "Packing list" | Opens checklists page with trip context |
-| Trip → Budget agent | Trip card → "Budget" | Opens budget_buddy chat with trip context |
+| Trip → Budget agent | Trip card → "Budget" | Opens budget_buddy chat; URL has `?context=trip:{id}`; context message auto-sent; agent responds with trip-relevant info |
+| No context param | Navigate to `/chat/calendar_whiz` directly (no `?context=`) | Generic starter prompts shown, no auto-sent message |
+| Invalid context param | Navigate to `/chat/calendar_whiz?context=bogus:123` | Graceful fallback — generic starter prompts, no crash |
 | Stats → Tab context | See "1 service due" in stats → Switch to Garage → Filter "Service Due" | Same vehicle count as stat box |
+
+### Dashboard Quick Actions (added 2026-03-29)
+
+The dashboard now shows a 6-item quick actions grid linking to all agents and key pages.
+
+| Test | Steps | Expected |
+|------|-------|----------|
+| All 6 actions visible | Visit `/dashboard` | Grid shows: Schedule Sync, Grocery List, Expenses, School Hub, Checklists, House Ops |
+| Schedule Sync link | Tap "Schedule Sync" | Navigates to `/chat/calendar_whiz` |
+| Grocery List link | Tap "Grocery List" | Navigates to `/chat/grocery_guru` |
+| Expenses link | Tap "Expenses" | Navigates to `/chat/budget_buddy` |
+| School Hub link | Tap "School Hub" | Navigates to `/chat/school_event_hub` |
+| Checklists link | Tap "Checklists" | Navigates to `/checklists` |
+| House Ops link | Tap "House Ops" | Navigates to `/household-ops` |
