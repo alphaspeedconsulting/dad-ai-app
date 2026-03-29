@@ -1,1 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#00CCFF"/><text x="16" y="24" font-family="Georgia, serif" font-size="22" font-weight="bold" fill="#090B14" text-anchor="middle">&#945;</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0D1117"/>
+      <stop offset="100%" stop-color="#090B14"/>
+    </linearGradient>
+    <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#00CCFF"/>
+      <stop offset="100%" stop-color="#00E5CC"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="6" fill="url(#bg)"/>
+  <text x="16" y="24" font-family="Georgia, serif" font-size="24" font-weight="bold" fill="url(#cyan)" text-anchor="middle">&#945;</text>
+</svg>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useAuthStore } from "@/stores/auth-store";
-import { auth, ApiError } from "@/lib/api-client";
+import { auth, consent as consentApi, ApiError } from "@/lib/api-client";
 import type { AuthResponse } from "@/types/api-contracts";
 
 type AuthMode = "login" | "signup";
@@ -48,9 +48,11 @@ export function AuthForm({ initialMode, initialPromo, showModeToggle }: AuthForm
   const login = useAuthStore((s) => s.login);
   const allConsented = consent.terms && consent.privacy && consent.ai_disclosure;
 
+  const googleAvailable = !!googleClientId;
+
   const handleGoogleLogin = () => {
     if (!googleClientId) {
-      setSubmitError("Google login is not configured for local dev yet. Use email sign up below.");
+      setSubmitError("Google login is not available. Use email sign up below.");
       return;
     }
     setSubmitError("Google OAuth flow is coming next. Use email sign up below for local testing.");
@@ -101,16 +103,33 @@ export function AuthForm({ initialMode, initialPromo, showModeToggle }: AuthForm
     }
   };
 
-  const handleConsentSubmit = () => {
-    if (authPending) {
-      login(authPending.access_token, authPending.user);
-      if (inviteCode.trim()) {
-        localStorage.setItem("dad-alpha-promo-code", inviteCode.trim().toUpperCase());
+  const handleConsentSubmit = async () => {
+    if (!authPending) return;
+
+    login(authPending.access_token, authPending.user);
+
+    if (inviteCode.trim()) {
+      localStorage.setItem("dad-alpha-promo-code", inviteCode.trim().toUpperCase());
+    }
+
+    // Persist consent to backend (token is now in localStorage for the request)
+    if (!isMockMode) {
+      try {
+        await consentApi.accept({
+          consents: [
+            { document_type: "terms_of_service", document_version: "1.0", document_hash: "accepted" },
+            { document_type: "privacy_policy", document_version: "1.0", document_hash: "accepted" },
+            { document_type: "ai_disclosure", document_version: "1.0", document_hash: "accepted" },
+          ],
+        });
+      } catch {
+        // Non-blocking — user can still proceed; consent will be re-prompted if needed
       }
-      if (!authPending.user.household_id) {
-        window.location.href = "/settings?onboarding=household";
-        return;
-      }
+    }
+
+    if (!authPending.user.household_id) {
+      window.location.href = "/settings?onboarding=household";
+      return;
     }
     window.location.href = "/dashboard";
   };
@@ -220,7 +239,12 @@ export function AuthForm({ initialMode, initialPromo, showModeToggle }: AuthForm
           <button
             onClick={handleGoogleLogin}
             type="button"
-            className="w-full flex items-center justify-center gap-3 bg-surface-container-low hover:bg-surface-container border border-border-subtle/20 rounded-full py-3 px-6 font-medium text-foreground text-alphaai-base transition-colors mb-4"
+            disabled={!googleAvailable}
+            className={`w-full flex items-center justify-center gap-3 border border-border-subtle/20 rounded-full py-3 px-6 font-medium text-alphaai-base transition-colors mb-4 ${
+              googleAvailable
+                ? "bg-surface-container-low hover:bg-surface-container text-foreground"
+                : "bg-surface-container-low/50 text-muted-foreground opacity-50 cursor-not-allowed"
+            }`}
           >
             <svg width="20" height="20" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
@@ -230,6 +254,11 @@ export function AuthForm({ initialMode, initialPromo, showModeToggle }: AuthForm
             </svg>
             Continue with Google
           </button>
+          {!googleAvailable && (
+            <p className="text-alphaai-3xs text-muted-foreground text-center -mt-2 mb-2">
+              Google sign-in coming soon — use email below
+            </p>
+          )}
 
           <div className="flex items-center gap-4 my-4">
             <div className="flex-1 h-px bg-border-subtle/30" />

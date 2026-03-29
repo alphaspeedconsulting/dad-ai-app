@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0D1117"/>
+      <stop offset="100%" stop-color="#090B14"/>
+    </linearGradient>
+    <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#00CCFF"/>
+      <stop offset="100%" stop-color="#00E5CC"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="512" height="512" rx="108" fill="url(#bg)"/>
+  <!-- Subtle glow behind alpha -->
+  <circle cx="256" cy="250" r="160" fill="#00CCFF" opacity="0.07"/>
+  <circle cx="256" cy="250" r="90" fill="#00CCFF" opacity="0.04"/>
+  <!-- Alpha symbol — larger -->
+  <text x="256" y="350" font-family="Georgia, 'Times New Roman', serif" font-size="360" font-weight="bold" fill="url(#cyan)" text-anchor="middle">&#945;</text>
+  <!-- "DAD" label — Plus Jakarta Sans style (clean geometric sans) -->
+  <text x="256" y="460" font-family="'Plus Jakarta Sans', 'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="68" font-weight="800" fill="#00CCFF" text-anchor="middle" letter-spacing="16">DAD</text>
+</svg>
