@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
 import { useChatStore } from "@/stores/chat-store";
@@ -23,6 +23,7 @@ const MOCK_AGENTS = [
 
 export function AgentChatClient({ agentType }: { agentType: AgentType }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { messages, isTyping, sendMessage, clearChat } = useChatStore();
   const { agents, fetchAgents } = useAgentsStore();
   const householdId = useAuthStore((s) => s.user?.household_id);
@@ -31,6 +32,7 @@ export function AgentChatClient({ agentType }: { agentType: AgentType }) {
   const [confirmClear, setConfirmClear] = useState(false);
   const confirmClearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const contextHandledRef = useRef(false);
   const { isListening, isSupported, transcript, startListening, stopListening, clearTranscript } = useVoiceInput();
   const isPro = tier === "family_pro";
 
@@ -46,6 +48,34 @@ export function AgentChatClient({ agentType }: { agentType: AgentType }) {
   useEffect(() => {
     if (agents.length === 0 && !isMockMode) fetchAgents();
   }, [agents.length, fetchAgents]);
+
+  // Handle ?context= query param from household-ops and other deep links
+  useEffect(() => {
+    if (contextHandledRef.current) return;
+    const context = searchParams.get("context");
+    if (!context || !householdId) return;
+
+    contextHandledRef.current = true;
+    const [type, id] = context.split(":");
+    const contextMessages: Record<string, Record<string, string>> = {
+      vehicle: {
+        calendar_whiz: `I'm looking at vehicle ${id ?? "service"} — what's the upcoming service schedule?`,
+        budget_buddy: `Show me expenses for vehicle ${id ?? ""}`.trim(),
+      },
+      project: {
+        budget_buddy: `What are the costs for home project ${id ?? ""}?`.trim(),
+      },
+      trip: {
+        calendar_whiz: `Help me plan dates for trip ${id ?? ""}`.trim(),
+        budget_buddy: `What's the budget for trip ${id ?? ""}?`.trim(),
+      },
+    };
+
+    const message = contextMessages[type]?.[agentType];
+    if (message) {
+      sendMessage(agentType, message, householdId);
+    }
+  }, [searchParams, householdId, agentType, sendMessage]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });

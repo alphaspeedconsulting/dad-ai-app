@@ -75,24 +75,33 @@ export default function DashboardPage() {
             </span>
           </div>
           <div className="space-y-2">
-            <div className="flex items-start gap-2">
+            <Link
+              href="/chat/calendar_whiz"
+              className="flex items-start gap-2 group hover:bg-surface-container-low rounded-lg px-1 py-0.5 -mx-1 transition-colors"
+            >
               <span className="w-1.5 h-1.5 rounded-full bg-brand mt-2 flex-shrink-0" />
-              <p className="text-alphaai-sm text-foreground">
+              <p className="text-alphaai-sm text-foreground group-hover:text-brand transition-colors">
                 Sofia has soccer practice moved to 4:30 PM Thursday
               </p>
-            </div>
-            <div className="flex items-start gap-2">
+            </Link>
+            <Link
+              href="/chat/grocery_guru"
+              className="flex items-start gap-2 group hover:bg-surface-container-low rounded-lg px-1 py-0.5 -mx-1 transition-colors"
+            >
               <span className="w-1.5 h-1.5 rounded-full bg-secondary mt-2 flex-shrink-0" />
-              <p className="text-alphaai-sm text-foreground">
+              <p className="text-alphaai-sm text-foreground group-hover:text-brand transition-colors">
                 Grocery list updated — added snacks for school lunches
               </p>
-            </div>
-            <div className="flex items-start gap-2">
+            </Link>
+            <Link
+              href="/chat/school_event_hub"
+              className="flex items-start gap-2 group hover:bg-surface-container-low rounded-lg px-1 py-0.5 -mx-1 transition-colors"
+            >
               <span className="w-1.5 h-1.5 rounded-full bg-tertiary mt-2 flex-shrink-0" />
-              <p className="text-alphaai-sm text-foreground">
+              <p className="text-alphaai-sm text-foreground group-hover:text-brand transition-colors">
                 Permission slip for Science Museum due Friday
               </p>
-            </div>
+            </Link>
           </div>
         </section>
 
@@ -103,7 +112,7 @@ export default function DashboardPage() {
             <h2 className="font-headline text-alphaai-base font-semibold text-foreground">
               This Week
             </h2>
-            <Link href="/agents" className="text-alphaai-xs text-brand font-medium ml-auto">
+            <Link href="/chat/calendar_whiz" className="text-alphaai-xs text-brand font-medium ml-auto">
               Full view
             </Link>
           </div>
@@ -138,9 +147,12 @@ export default function DashboardPage() {
           <p className="text-alphaai-sm text-foreground">
             Thursday 4 PM — Sofia&apos;s Soccer overlaps with Liam&apos;s Swim Class. Both need a parent driver.
           </p>
-          <button className="mt-2 text-alphaai-xs text-brand font-semibold">
-            Resolve with Calendar Whiz
-          </button>
+          <Link
+            href="/chat/calendar_whiz"
+            className="mt-2 text-alphaai-xs text-brand font-semibold inline-block hover:underline"
+          >
+            Resolve with Schedule Sync
+          </Link>
         </section>
 
         {/* Quick Actions */}
@@ -148,24 +160,33 @@ export default function DashboardPage() {
           <h2 className="font-headline text-alphaai-md font-semibold text-foreground mb-3">
             Quick Actions
           </h2>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <Link
-              href="/checklists"
+              href="/chat/calendar_whiz"
               className="dad-card p-4 flex flex-col items-center gap-2 hover:bg-surface-container-low transition-colors"
             >
               <div className="w-12 h-12 bg-brand-glow/30 rounded-xl flex items-center justify-center">
-                <span className="material-symbols-outlined dad-icon-lg text-brand">checklist</span>
+                <span className="material-symbols-outlined dad-icon-lg text-brand">calendar_month</span>
               </div>
-              <span className="text-alphaai-sm font-medium text-foreground">New Checklist</span>
+              <span className="text-alphaai-xs font-medium text-foreground text-center">Schedule Sync</span>
             </Link>
             <Link
-              href="/expenses"
+              href="/chat/grocery_guru"
+              className="dad-card p-4 flex flex-col items-center gap-2 hover:bg-surface-container-low transition-colors"
+            >
+              <div className="w-12 h-12 bg-brand-glow/20 rounded-xl flex items-center justify-center">
+                <span className="material-symbols-outlined dad-icon-lg text-brand">shopping_cart</span>
+              </div>
+              <span className="text-alphaai-xs font-medium text-foreground text-center">Grocery List</span>
+            </Link>
+            <Link
+              href="/chat/budget_buddy"
               className="dad-card p-4 flex flex-col items-center gap-2 hover:bg-surface-container-low transition-colors"
             >
               <div className="w-12 h-12 bg-secondary-container/50 rounded-xl flex items-center justify-center">
-                <span className="material-symbols-outlined dad-icon-lg text-secondary">receipt_long</span>
+                <span className="material-symbols-outlined dad-icon-lg text-secondary">account_balance_wallet</span>
               </div>
-              <span className="text-alphaai-sm font-medium text-foreground">Track Expense</span>
+              <span className="text-alphaai-xs font-medium text-foreground text-center">Expenses</span>
             </Link>
             <Link
               href="/chat/school_event_hub"
@@ -174,7 +195,16 @@ export default function DashboardPage() {
               <div className="w-12 h-12 bg-tertiary-container/50 rounded-xl flex items-center justify-center">
                 <span className="material-symbols-outlined dad-icon-lg text-tertiary">school</span>
               </div>
-              <span className="text-alphaai-sm font-medium text-foreground">School Hub</span>
+              <span className="text-alphaai-xs font-medium text-foreground text-center">School Hub</span>
+            </Link>
+            <Link
+              href="/checklists"
+              className="dad-card p-4 flex flex-col items-center gap-2 hover:bg-surface-container-low transition-colors"
+            >
+              <div className="w-12 h-12 bg-brand-glow/30 rounded-xl flex items-center justify-center">
+                <span className="material-symbols-outlined dad-icon-lg text-brand">checklist</span>
+              </div>
+              <span className="text-alphaai-xs font-medium text-foreground text-center">Checklists</span>
             </Link>
             <Link
               href="/household-ops"
@@ -183,7 +213,7 @@ export default function DashboardPage() {
               <div className="w-12 h-12 bg-brand-glow/20 rounded-xl flex items-center justify-center">
                 <span className="material-symbols-outlined dad-icon-lg text-brand">home_repair_service</span>
               </div>
-              <span className="text-alphaai-sm font-medium text-foreground">Household Ops</span>
+              <span className="text-alphaai-xs font-medium text-foreground text-center">House Ops</span>
             </Link>
           </div>
         </section>
@@ -195,18 +225,18 @@ export default function DashboardPage() {
           </h2>
           <div className="space-y-2">
             {[
-              { icon: "shopping_cart", text: "Grocery list synced — 12 items", time: "1h ago", color: "text-brand" },
-              { icon: "receipt_long", text: "$47.50 at Target (groceries)", time: "3h ago", color: "text-secondary" },
-              { icon: "school", text: "Spring Concert added to calendar", time: "5h ago", color: "text-tertiary" },
-              { icon: "calendar_month", text: "Weekly plan generated for Mar 24-30", time: "Yesterday", color: "text-brand" },
+              { icon: "shopping_cart", text: "Grocery list synced — 12 items", time: "1h ago", color: "text-brand", href: "/chat/grocery_guru" },
+              { icon: "receipt_long", text: "$47.50 at Target (groceries)", time: "3h ago", color: "text-secondary", href: "/chat/budget_buddy" },
+              { icon: "school", text: "Spring Concert added to calendar", time: "5h ago", color: "text-tertiary", href: "/chat/school_event_hub" },
+              { icon: "calendar_month", text: "Weekly plan generated for Mar 24-30", time: "Yesterday", color: "text-brand", href: "/chat/calendar_whiz" },
             ].map((item, i) => (
-              <div key={i} className="dad-card p-3 flex items-center gap-3">
+              <Link key={i} href={item.href} className="dad-card p-3 flex items-center gap-3 hover:bg-surface-container-low transition-colors block">
                 <span className={`material-symbols-outlined dad-icon-sm ${item.color}`}>
                   {item.icon}
                 </span>
                 <p className="text-alphaai-sm text-foreground flex-1">{item.text}</p>
                 <span className="text-alphaai-3xs text-muted-foreground flex-shrink-0">{item.time}</span>
-              </div>
+              </Link>
             ))}
           </div>
         </section>
