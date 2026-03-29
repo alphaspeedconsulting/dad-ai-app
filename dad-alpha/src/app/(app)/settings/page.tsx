@@ -55,7 +55,7 @@ export default function SettingsPage() {
   const [googleError, setGoogleError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user?.household_id) return;
+    if (!user?.household_id || isMockMode) return;
     fetchMembers(user.household_id);
     fetchUsage(user.household_id);
   }, [user?.household_id, fetchMembers, fetchUsage]);
@@ -125,6 +125,7 @@ export default function SettingsPage() {
 
   const handleInviteCoParent = async () => {
     if (!user?.household_id || !inviteEmail.trim()) return;
+    if (isMockMode) { setInviteEmail(""); return; }
     await inviteCoParent(user.household_id, {
       email: inviteEmail.trim(),
       parent_brand: "mom",
@@ -144,7 +145,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border-subtle/10">
+      <header className="fixed top-0 left-0 right-0 z-40 bg-background border-b border-border-subtle/20">
         <div className="max-w-lg mx-auto px-4 py-3">
           <h1 className="font-headline text-alphaai-xl font-bold text-foreground">Settings</h1>
         </div>

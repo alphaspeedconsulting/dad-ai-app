@@ -997,7 +997,7 @@ function HouseholdOpsContent() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border-subtle/10">
+      <header className="fixed top-0 left-0 right-0 z-40 bg-background border-b border-border-subtle/20">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
           <Link href="/dashboard" className="text-muted-foreground">
             <span className="material-symbols-outlined text-[22px]">arrow_back</span>

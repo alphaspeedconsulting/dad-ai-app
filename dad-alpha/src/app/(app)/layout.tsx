@@ -9,7 +9,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <ErrorBoundary>
       <InstallBanner />
       <OfflineBanner />
-      <div className="alpha-dad min-h-screen bg-background pb-20">
+      <div className="alpha-dad min-h-screen bg-background pb-[calc(5rem+env(safe-area-inset-bottom))]">
         {children}
       </div>
       <SyncStatus />

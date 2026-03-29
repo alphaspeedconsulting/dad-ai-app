@@ -183,7 +183,7 @@ export function AgentChatClient({ agentType }: { agentType: AgentType }) {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      <header className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border-subtle/10">
+      <header className="fixed top-0 left-0 right-0 z-40 bg-background border-b border-border-subtle/20">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
           <button
             onClick={() => router.back()}
@@ -310,7 +310,7 @@ export function AgentChatClient({ agentType }: { agentType: AgentType }) {
         }}
       />
 
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/90 backdrop-blur-2xl border-t border-border-subtle/10 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border-subtle/20 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
         <div className="max-w-lg mx-auto flex items-end gap-2">
           <textarea
             value={input}

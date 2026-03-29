@@ -11,8 +11,14 @@ const NAV_ITEMS = [
   { href: "/settings", icon: "settings", label: "Settings" },
 ] as const;
 
+const HIDDEN_ROUTES = ["/login", "/signup"];
+
 export function BottomNav() {
   const pathname = usePathname();
+
+  if (HIDDEN_ROUTES.includes(pathname) || pathname.startsWith("/chat/")) {
+    return null;
+  }
 
   return (
     <nav className="dad-bottom-nav fixed bottom-0 left-0 right-0 z-50">
