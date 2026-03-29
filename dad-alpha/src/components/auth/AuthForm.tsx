@@ -70,7 +70,7 @@ export function AuthForm({ initialMode, initialPromo, showModeToggle }: AuthForm
           email,
           name: name.trim() || "Dad",
           household_id: "mock_household_1",
-          tier: "family",
+          tier: "family_pro",
           consent_current: true,
           parent_brand: "dad",
           household_role: "admin",

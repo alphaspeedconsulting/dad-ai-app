@@ -112,7 +112,10 @@ export const auth = {
       body: JSON.stringify({ ...body, parent_brand: "dad" }),
     }),
   loginEmail: (body: AuthEmailRequest) =>
-    request<AuthResponse>("/api/auth/login", { method: "POST", body: JSON.stringify(body) }),
+    request<AuthResponse>("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ ...body, parent_brand: "dad" }),
+    }),
   signup: (body: AuthEmailRequest & { name: string }) =>
     request<AuthResponse>("/api/auth/signup", {
       method: "POST",

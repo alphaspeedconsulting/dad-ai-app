@@ -343,7 +343,7 @@ export function AgentChatClient({ agentType }: { agentType: AgentType }) {
         }}
       />
 
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border-subtle/20 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+      <div className="fixed bottom-0 left-0 right-0 z-60 bg-background border-t border-border-subtle/20 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
         <div className="max-w-lg mx-auto flex items-end gap-2">
           <textarea
             value={input}
