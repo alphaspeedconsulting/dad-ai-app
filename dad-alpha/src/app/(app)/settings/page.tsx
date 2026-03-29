@@ -43,6 +43,27 @@ export default function SettingsPage() {
   } = useHouseholdStore();
   const { permission, subscribe } = usePushNotifications();
 
+  const [partnerDigestEnabled, setPartnerDigestEnabled] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    return localStorage.getItem("dad-alpha-partner-digest") !== "false";
+  });
+  const [quietHoursEnabled, setQuietHoursEnabled] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    return localStorage.getItem("dad-alpha-quiet-hours") !== "false";
+  });
+
+  const togglePartnerDigest = () => {
+    const next = !partnerDigestEnabled;
+    setPartnerDigestEnabled(next);
+    localStorage.setItem("dad-alpha-partner-digest", String(next));
+  };
+
+  const toggleQuietHours = () => {
+    const next = !quietHoursEnabled;
+    setQuietHoursEnabled(next);
+    localStorage.setItem("dad-alpha-quiet-hours", String(next));
+  };
+
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [promoCode, setPromoCode] = useState("");
   const [isCheckingOut, setIsCheckingOut] = useState(false);
@@ -151,11 +172,11 @@ export default function SettingsPage() {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 pt-20 pb-4 space-y-6">
+      <main id="main-content" className="max-w-lg mx-auto px-4 pt-20 pb-24 space-y-6">
         {/* Profile */}
         <section className="dad-card p-4 flex items-center gap-4">
           <div className="w-14 h-14 dad-gradient-hero rounded-full flex items-center justify-center">
-            <span className="material-symbols-outlined text-[28px] text-on-primary">person</span>
+            <span className="material-symbols-outlined dad-icon-xl text-on-primary">person</span>
           </div>
           <div className="flex-1">
             <p className="font-headline text-alphaai-md font-semibold text-foreground">{user?.name ?? "Dad"}</p>
@@ -185,7 +206,7 @@ export default function SettingsPage() {
               {permission !== "granted" ? (
                 <button onClick={subscribe} className="dad-btn-primary text-alphaai-xs py-2 px-4">Enable</button>
               ) : (
-                <span className="material-symbols-outlined text-[20px] text-brand">check_circle</span>
+                <span className="material-symbols-outlined dad-icon-md text-brand">check_circle</span>
               )}
             </div>
             <div className="p-4 flex items-center justify-between">
@@ -193,14 +214,28 @@ export default function SettingsPage() {
                 <p className="text-alphaai-sm font-medium text-foreground">Partner Sync Digest</p>
                 <p className="text-alphaai-3xs text-muted-foreground">Morning summary at 7:00 AM</p>
               </div>
-              <div className="dad-toggle" data-active="true" />
+              <button
+                role="switch"
+                aria-checked={partnerDigestEnabled}
+                aria-label="Partner Sync Digest"
+                onClick={togglePartnerDigest}
+                className="dad-toggle border-0 p-0 flex-shrink-0"
+                data-active={partnerDigestEnabled ? "true" : "false"}
+              />
             </div>
             <div className="p-4 flex items-center justify-between">
               <div>
                 <p className="text-alphaai-sm font-medium text-foreground">Quiet Hours</p>
                 <p className="text-alphaai-3xs text-muted-foreground">10:00 PM — 7:00 AM</p>
               </div>
-              <div className="dad-toggle" data-active="true" />
+              <button
+                role="switch"
+                aria-checked={quietHoursEnabled}
+                aria-label="Quiet Hours"
+                onClick={toggleQuietHours}
+                className="dad-toggle border-0 p-0 flex-shrink-0"
+                data-active={quietHoursEnabled ? "true" : "false"}
+              />
             </div>
           </div>
         </section>
@@ -250,6 +285,7 @@ export default function SettingsPage() {
                   <input type="text" value={promoCode}
                     onChange={(e) => setPromoCode(e.target.value.trim().toUpperCase())}
                     placeholder="Beta invite code (optional)"
+                    aria-label="Beta invite code"
                     className="w-full bg-surface border border-border-subtle/20 rounded-xl px-4 py-2 text-alphaai-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-brand"
                   />
                 )}
@@ -268,7 +304,7 @@ export default function SettingsPage() {
                   <label className="text-alphaai-xs text-muted-foreground">Create a household</label>
                   <div className="flex gap-2">
                     <input value={householdName} onChange={(e) => setHouseholdName(e.target.value)}
-                      placeholder="Franco Family" className="dad-input flex-1" />
+                      placeholder="Franco Family" aria-label="Household name" className="dad-input flex-1" />
                     <button onClick={handleCreateHousehold}
                       disabled={isHouseholdLoading || !householdName.trim()}
                       className="dad-btn-primary text-alphaai-xs py-2 px-3 disabled:opacity-60">Create</button>
@@ -278,7 +314,7 @@ export default function SettingsPage() {
                   <label className="text-alphaai-xs text-muted-foreground">Join via invite token</label>
                   <div className="flex gap-2">
                     <input value={inviteToken} onChange={(e) => setInviteToken(e.target.value)}
-                      placeholder="Paste invite token" className="dad-input flex-1" />
+                      placeholder="Paste invite token" aria-label="Invite token" className="dad-input flex-1" />
                     <button onClick={handleJoinHousehold}
                       disabled={isHouseholdLoading || !inviteToken.trim()}
                       className="dad-btn-outline text-alphaai-xs py-2 px-3 disabled:opacity-60">Join</button>
@@ -291,7 +327,7 @@ export default function SettingsPage() {
                   <label className="text-alphaai-xs text-muted-foreground">Invite co-parent</label>
                   <div className="flex gap-2">
                     <input value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)}
-                      placeholder="partner@email.com" className="dad-input flex-1" type="email" />
+                      placeholder="partner@email.com" aria-label="Co-parent email address" className="dad-input flex-1" type="email" />
                     <button onClick={handleInviteCoParent}
                       disabled={isHouseholdLoading || !inviteEmail.trim() || user.household_role !== "admin"}
                       className="dad-btn-primary text-alphaai-xs py-2 px-3 disabled:opacity-60">Invite</button>
@@ -301,7 +337,7 @@ export default function SettingsPage() {
                   <div className="rounded-xl border border-border-subtle/20 bg-surface p-3 space-y-2">
                     <p className="text-alphaai-3xs text-muted-foreground">Latest invite token</p>
                     <p className="text-alphaai-xs font-mono text-foreground break-all">{latestInvite.invite_token}</p>
-                    <button onClick={handleCopyInviteToken} className="dad-btn-outline text-alphaai-3xs py-1 px-3">
+                    <button onClick={handleCopyInviteToken} className="dad-btn-outline text-alphaai-3xs py-2.5 px-4">
                       {copyState === "copied" ? "Copied" : "Copy token"}
                     </button>
                   </div>
@@ -347,7 +383,7 @@ export default function SettingsPage() {
           <div className="dad-card p-4 space-y-3">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-surface-container flex items-center justify-center flex-shrink-0">
-                <span className="material-symbols-outlined text-[18px] text-foreground">calendar_month</span>
+                <span className="material-symbols-outlined dad-icon-sm text-foreground">calendar_month</span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-alphaai-sm font-medium text-foreground">Google Calendar</p>
@@ -382,7 +418,7 @@ export default function SettingsPage() {
             )}
             {user?.tier !== "family_pro" && (
               <div className="rounded-xl border border-border-subtle/20 bg-surface-container-low/50 p-3 flex items-center gap-2">
-                <span className="material-symbols-outlined text-[16px] text-muted-foreground">lock</span>
+                <span className="material-symbols-outlined dad-icon-xs text-muted-foreground">lock</span>
                 <p className="text-alphaai-3xs text-muted-foreground">
                   Google Calendar sync with household ops is a{" "}
                   <Link href="/settings" className="text-brand underline">
@@ -401,15 +437,15 @@ export default function SettingsPage() {
           <div className="dad-card divide-y divide-border-subtle/10">
             <Link href="/legal/terms" className="p-4 flex items-center gap-3">
               <span className="text-alphaai-sm text-foreground flex-1">Terms of Service</span>
-              <span className="material-symbols-outlined text-[18px] text-muted-foreground">chevron_right</span>
+              <span className="material-symbols-outlined dad-icon-sm text-muted-foreground">chevron_right</span>
             </Link>
             <Link href="/legal/privacy" className="p-4 flex items-center gap-3">
               <span className="text-alphaai-sm text-foreground flex-1">Privacy Policy</span>
-              <span className="material-symbols-outlined text-[18px] text-muted-foreground">chevron_right</span>
+              <span className="material-symbols-outlined dad-icon-sm text-muted-foreground">chevron_right</span>
             </Link>
             <Link href="/legal/ai-disclosure" className="p-4 flex items-center gap-3">
               <span className="text-alphaai-sm text-foreground flex-1">AI Disclosure</span>
-              <span className="material-symbols-outlined text-[18px] text-muted-foreground">chevron_right</span>
+              <span className="material-symbols-outlined dad-icon-sm text-muted-foreground">chevron_right</span>
             </Link>
           </div>
         </section>
@@ -418,7 +454,7 @@ export default function SettingsPage() {
         <section>
           <button onClick={() => { logout(); window.location.href = "/"; }}
             className="w-full dad-card p-4 flex items-center gap-3 hover:bg-error/5 transition-colors">
-            <span className="material-symbols-outlined text-[20px] text-error">logout</span>
+            <span className="material-symbols-outlined dad-icon-md text-error">logout</span>
             <span className="text-alphaai-sm font-medium text-error">Sign Out</span>
           </button>
         </section>

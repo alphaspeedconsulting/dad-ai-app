@@ -196,6 +196,15 @@
   transform: translateX(1.25rem);
 }
 
+/* Material Symbols icon scale — use instead of arbitrary text-[Xpx] */
+.dad-icon-3xs { font-size: 0.75rem;  } /* 12px */
+.dad-icon-xs  { font-size: 1rem;     } /* 16px */
+.dad-icon-sm  { font-size: 1.125rem; } /* 18px */
+.dad-icon-md  { font-size: 1.25rem;  } /* 20px — 22px standardised here */
+.dad-icon-lg  { font-size: 1.5rem;   } /* 24px */
+.dad-icon-xl  { font-size: 1.75rem;  } /* 28px — 32px standardised here */
+.dad-icon-2xl { font-size: 2.5rem;   } /* 40px */
+
 /* Bottom nav */
 .dad-bottom-nav {
   background: hsl(var(--background));

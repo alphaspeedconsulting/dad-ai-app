@@ -69,16 +69,17 @@ export default function ExpensesPage() {
           </div>
           <button
             onClick={() => setShowForm(!showForm)}
+            aria-label={showForm ? "Close expense form" : "Add expense"}
             className="w-10 h-10 dad-gradient-hero rounded-full flex items-center justify-center"
           >
-            <span className="material-symbols-outlined text-[20px] text-on-primary">
+            <span className="material-symbols-outlined dad-icon-md text-on-primary">
               {showForm ? "close" : "add"}
             </span>
           </button>
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 pt-24 pb-24 space-y-4">
+      <main id="main-content" className="max-w-lg mx-auto px-4 pt-24 pb-24 space-y-4">
         {/* Monthly summary */}
         <div className="dad-gradient-hero rounded-2xl p-5 text-on-primary">
           <p className="text-alphaai-xs opacity-80">This month</p>
@@ -109,6 +110,7 @@ export default function ExpensesPage() {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="Amount ($)"
+              aria-label="Expense amount"
               step="0.01"
               className="dad-input"
             />
@@ -116,6 +118,7 @@ export default function ExpensesPage() {
               value={merchant}
               onChange={(e) => setMerchant(e.target.value)}
               placeholder="Merchant / Description"
+              aria-label="Merchant or description"
               className="dad-input"
             />
             <div className="flex flex-wrap gap-2">
@@ -155,7 +158,7 @@ export default function ExpensesPage() {
             {expenses.map((exp) => (
               <div key={exp.id} className="dad-card p-3 flex items-center gap-3">
                 <div className="w-10 h-10 bg-surface-container rounded-xl flex items-center justify-center flex-shrink-0">
-                  <span className="material-symbols-outlined text-[18px] text-brand">
+                  <span className="material-symbols-outlined dad-icon-sm text-brand">
                     {CATEGORY_ICONS[exp.category] ?? "receipt_long"}
                   </span>
                 </div>

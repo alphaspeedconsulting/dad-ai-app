@@ -28,6 +28,8 @@ export function AgentChatClient({ agentType }: { agentType: AgentType }) {
   const householdId = useAuthStore((s) => s.user?.household_id);
   const tier = useAuthStore((s) => s.user?.tier);
   const [input, setInput] = useState("");
+  const [confirmClear, setConfirmClear] = useState(false);
+  const confirmClearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const { isListening, isSupported, transcript, startListening, stopListening, clearTranscript } = useVoiceInput();
   const isPro = tier === "family_pro";
@@ -177,6 +179,17 @@ export function AgentChatClient({ agentType }: { agentType: AgentType }) {
     sendMessage(agentType, action.label, householdId);
   };
 
+  const handleClearRequest = () => {
+    if (confirmClear) {
+      clearChat(agentType);
+      setConfirmClear(false);
+      if (confirmClearTimerRef.current) clearTimeout(confirmClearTimerRef.current);
+    } else {
+      setConfirmClear(true);
+      confirmClearTimerRef.current = setTimeout(() => setConfirmClear(false), 4000);
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
@@ -187,38 +200,58 @@ export function AgentChatClient({ agentType }: { agentType: AgentType }) {
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
           <button
             onClick={() => router.back()}
+            aria-label="Go back"
             className="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center"
           >
-            <span className="material-symbols-outlined text-[20px] text-foreground">arrow_back</span>
+            <span className="material-symbols-outlined dad-icon-md text-foreground">arrow_back</span>
           </button>
           {agent && (
             <>
               <div className="dad-agent-avatar bg-brand-glow/30">
-                <span className="material-symbols-outlined text-[18px] text-brand">{agent.icon}</span>
+                <span className="material-symbols-outlined dad-icon-sm text-brand">{agent.icon}</span>
               </div>
               <div className="flex-1 min-w-0">
                 <h1 className="font-headline text-alphaai-base font-semibold text-foreground truncate">{agent.name}</h1>
                 <p className="text-alphaai-3xs text-muted-foreground">{isTyping ? "Thinking..." : "Online"}</p>
               </div>
               {chatMessages.length > 0 && (
-                <button
-                  onClick={() => clearChat(agentType)}
-                  className="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center"
-                  title="Clear chat"
-                >
-                  <span className="material-symbols-outlined text-[18px] text-muted-foreground">delete_sweep</span>
-                </button>
+                confirmClear ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleClearRequest}
+                      className="text-alphaai-xs text-error font-semibold"
+                      aria-label="Confirm clear chat history"
+                    >
+                      Clear
+                    </button>
+                    <button
+                      onClick={() => { setConfirmClear(false); if (confirmClearTimerRef.current) clearTimeout(confirmClearTimerRef.current); }}
+                      className="text-alphaai-xs text-muted-foreground"
+                      aria-label="Cancel clear"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleClearRequest}
+                    aria-label="Clear chat history"
+                    className="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center"
+                  >
+                    <span className="material-symbols-outlined dad-icon-sm text-muted-foreground">delete_sweep</span>
+                  </button>
+                )
               )}
             </>
           )}
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto px-4 pt-20 pb-32 max-w-lg mx-auto w-full">
+      <main id="main-content" className="flex-1 overflow-y-auto px-4 pt-20 pb-32 max-w-lg mx-auto w-full">
         {chatMessages.length === 0 && !isTyping ? (
           <div className="flex flex-col items-center justify-center h-full text-center px-6">
             <div className="w-16 h-16 dad-gradient-hero rounded-2xl flex items-center justify-center mb-4">
-              <span className="material-symbols-outlined text-[32px] text-on-primary">{agent?.icon ?? "smart_toy"}</span>
+              <span className="material-symbols-outlined dad-icon-xl text-on-primary">{agent?.icon ?? "smart_toy"}</span>
             </div>
             <h2 className="font-headline text-alphaai-lg font-semibold text-foreground mb-2">{agent?.name ?? "Agent"}</h2>
             <p className="text-alphaai-sm text-muted-foreground max-w-xs">{agent?.description ?? "How can I help you today?"}</p>
@@ -244,7 +277,7 @@ export function AgentChatClient({ agentType }: { agentType: AgentType }) {
               ) : (
                 <div key={msg.id} className="flex gap-3 items-start">
                   <div className="dad-agent-avatar bg-brand-glow/30 flex-shrink-0 mt-1">
-                    <span className="material-symbols-outlined text-[16px] text-brand">{agent?.icon ?? "smart_toy"}</span>
+                    <span className="material-symbols-outlined dad-icon-xs text-brand">{agent?.icon ?? "smart_toy"}</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="dad-chat-agent text-alphaai-sm">{renderMarkdown(msg.content)}</div>
@@ -268,7 +301,7 @@ export function AgentChatClient({ agentType }: { agentType: AgentType }) {
             {isTyping && (
               <div className="flex gap-3 items-start">
                 <div className="dad-agent-avatar bg-brand-glow/30 flex-shrink-0 mt-1">
-                  <span className="material-symbols-outlined text-[16px] text-brand">{agent?.icon ?? "smart_toy"}</span>
+                  <span className="material-symbols-outlined dad-icon-xs text-brand">{agent?.icon ?? "smart_toy"}</span>
                 </div>
                 <div className="dad-chat-agent py-4 px-5">
                   <div className="flex gap-1.5">
@@ -327,7 +360,7 @@ export function AgentChatClient({ agentType }: { agentType: AgentType }) {
                 isListening ? "bg-error text-on-primary animate-pulse" : "bg-surface-container text-muted-foreground hover:bg-surface-active"
               }`}
             >
-              <span className="material-symbols-outlined text-[20px]">{isListening ? "stop" : "mic"}</span>
+              <span className="material-symbols-outlined dad-icon-md">{isListening ? "stop" : "mic"}</span>
             </button>
           )}
           <button
@@ -335,7 +368,7 @@ export function AgentChatClient({ agentType }: { agentType: AgentType }) {
             disabled={!input.trim()}
             className="w-11 h-11 dad-gradient-hero rounded-full flex items-center justify-center flex-shrink-0 disabled:opacity-40 transition-opacity"
           >
-            <span className="material-symbols-outlined text-[20px] text-on-primary">send</span>
+            <span className="material-symbols-outlined dad-icon-md text-on-primary">send</span>
           </button>
         </div>
       </div>

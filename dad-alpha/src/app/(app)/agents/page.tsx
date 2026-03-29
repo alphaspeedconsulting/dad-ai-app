@@ -13,7 +13,7 @@ export default function AgentsPage() {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 pt-24 pb-24 space-y-3">
+      <main id="main-content" className="max-w-lg mx-auto px-4 pt-24 pb-24 space-y-3">
         {DAD_AGENTS.map((agent) => (
           <Link
             key={agent.agent_type}
@@ -21,25 +21,25 @@ export default function AgentsPage() {
             className="dad-card p-4 flex items-center gap-4 hover:bg-surface-container-low transition-colors block"
           >
             <div className="dad-agent-avatar bg-brand-glow/30">
-              <span className="material-symbols-outlined text-[20px] text-brand">
+              <span className="material-symbols-outlined dad-icon-md text-brand">
                 {agent.icon}
               </span>
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-headline text-alphaai-base font-semibold text-foreground truncate">
+              <h2 className="font-headline text-alphaai-base font-semibold text-foreground truncate">
                 {agent.name}
-              </h3>
+              </h2>
               <p className="text-alphaai-xs text-muted-foreground truncate">{agent.description}</p>
               <div className="flex gap-1.5 mt-1.5 flex-wrap">
                 {agent.capabilities.slice(0, 3).map((c) => (
                   <span key={c.action} className="text-alphaai-3xs bg-brand-glow/20 text-brand px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[12px]">{c.icon}</span>
+                    <span className="material-symbols-outlined dad-icon-3xs">{c.icon}</span>
                     {c.label}
                   </span>
                 ))}
               </div>
             </div>
-            <span className="material-symbols-outlined text-[18px] text-muted-foreground flex-shrink-0">
+            <span className="material-symbols-outlined dad-icon-sm text-muted-foreground flex-shrink-0">
               chevron_right
             </span>
           </Link>

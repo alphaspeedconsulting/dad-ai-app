@@ -54,7 +54,7 @@ const AREA_LABELS: Record<HomeProjectArea, string> = {
 function StatBox({ icon, value, label, color }: { icon: string; value: string; label: string; color: string }) {
   return (
     <div className="dad-card p-3 flex flex-col items-center gap-1 text-center flex-1 min-w-0">
-      <span className={`material-symbols-outlined text-[20px] ${color}`}>{icon}</span>
+      <span className={`material-symbols-outlined dad-icon-md ${color}`}>{icon}</span>
       <p className="font-headline text-alphaai-md font-bold text-foreground">{value}</p>
       <p className="text-alphaai-3xs text-muted-foreground leading-tight">{label}</p>
     </div>
@@ -144,7 +144,7 @@ function PremiumGate() {
   return (
     <div className="dad-card p-6 text-center space-y-3">
       <div className="w-14 h-14 bg-brand-glow/20 rounded-2xl flex items-center justify-center mx-auto">
-        <span className="material-symbols-outlined text-[28px] text-brand">workspace_premium</span>
+        <span className="material-symbols-outlined dad-icon-xl text-brand">workspace_premium</span>
       </div>
       <h3 className="font-headline text-alphaai-md font-semibold text-foreground">
         Family Pro feature
@@ -179,6 +179,7 @@ function GarageTab({ householdId }: { householdId: string }) {
   const [expandedVehicleId, setExpandedVehicleId] = useState<string | null>(null);
   const [form, setForm] = useState<VehicleCreateRequest>({ nickname: "" });
   const [garageFilter, setGarageFilter] = useState<"all" | "service_due">("all");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchVehicles(householdId);
@@ -230,13 +231,19 @@ function GarageTab({ householdId }: { householdId: string }) {
       })()}
 
       {vehicles.length === 0 && !isLoading && (
-        <div className="dad-card p-6 text-center space-y-2">
-          <span className="material-symbols-outlined text-[40px] text-muted-foreground">
+        <div className="dad-card p-6 text-center space-y-3">
+          <span className="material-symbols-outlined dad-icon-2xl text-muted-foreground">
             garage
           </span>
           <p className="text-alphaai-sm text-muted-foreground">
             No vehicles yet. Add your first to track maintenance.
           </p>
+          <button
+            onClick={() => setShowForm(true)}
+            className="dad-btn-primary text-alphaai-sm py-2.5 px-5"
+          >
+            Add Vehicle
+          </button>
         </div>
       )}
 
@@ -256,7 +263,7 @@ function GarageTab({ householdId }: { householdId: string }) {
               <img src={vehicle.photo_url} alt={vehicle.nickname} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
             ) : (
               <div className="w-10 h-10 bg-brand-glow/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                <span className="material-symbols-outlined text-[20px] text-brand">directions_car</span>
+                <span className="material-symbols-outlined dad-icon-md text-brand">directions_car</span>
               </div>
             )}
             <div className="flex-1 min-w-0">
@@ -271,7 +278,7 @@ function GarageTab({ householdId }: { householdId: string }) {
                   : ""}
               </p>
             </div>
-            <span className="material-symbols-outlined text-[18px] text-muted-foreground">
+            <span className="material-symbols-outlined dad-icon-sm text-muted-foreground">
               {expandedVehicleId === vehicle.id ? "expand_less" : "expand_more"}
             </span>
           </button>
@@ -322,12 +329,30 @@ function GarageTab({ householdId }: { householdId: string }) {
                 >
                   Log expense
                 </Link>
-                <button
-                  onClick={() => deleteVehicle(householdId, vehicle.id)}
-                  className="ml-auto text-alphaai-3xs text-error/80 underline"
-                >
-                  Remove
-                </button>
+                {confirmDeleteId === vehicle.id ? (
+                  <div className="ml-auto flex items-center gap-2">
+                    <span className="text-alphaai-3xs text-error">Remove vehicle?</span>
+                    <button
+                      onClick={() => { deleteVehicle(householdId, vehicle.id); setConfirmDeleteId(null); }}
+                      className="text-alphaai-3xs text-error font-semibold underline"
+                    >
+                      Confirm
+                    </button>
+                    <button
+                      onClick={() => setConfirmDeleteId(null)}
+                      className="text-alphaai-3xs text-muted-foreground underline"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setConfirmDeleteId(vehicle.id)}
+                    className="ml-auto text-alphaai-3xs text-error/80 underline"
+                  >
+                    Remove
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -343,6 +368,7 @@ function GarageTab({ householdId }: { householdId: string }) {
             value={form.nickname}
             onChange={(e) => setForm({ ...form, nickname: e.target.value })}
             placeholder="Nickname (e.g. Family SUV)"
+            aria-label="Vehicle nickname"
             className="dad-input w-full"
           />
           <div className="grid grid-cols-2 gap-2">
@@ -403,7 +429,7 @@ function GarageTab({ householdId }: { householdId: string }) {
           onClick={() => setShowForm(true)}
           className="w-full dad-card p-4 flex items-center justify-center gap-2 text-alphaai-sm text-brand font-medium hover:bg-surface-container-low transition-colors"
         >
-          <span className="material-symbols-outlined text-[18px]">add</span>
+          <span className="material-symbols-outlined dad-icon-sm">add</span>
           Add vehicle
         </button>
       )}
@@ -420,6 +446,7 @@ function HomeTab({ householdId }: { householdId: string }) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<HomeProjectCreateRequest>({ title: "", area: "other" });
   const [statusFilter, setStatusFilter] = useState<HomeProjectStatus | "all">("all");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProjects(householdId);
@@ -472,13 +499,19 @@ function HomeTab({ householdId }: { householdId: string }) {
       )}
 
       {filteredProjects.length === 0 && !isLoading && projects.length === 0 && (
-        <div className="dad-card p-6 text-center space-y-2">
-          <span className="material-symbols-outlined text-[40px] text-muted-foreground">
+        <div className="dad-card p-6 text-center space-y-3">
+          <span className="material-symbols-outlined dad-icon-2xl text-muted-foreground">
             home_repair_service
           </span>
           <p className="text-alphaai-sm text-muted-foreground">
             No home projects yet. Track repairs, improvements, and yard work here.
           </p>
+          <button
+            onClick={() => setShowForm(true)}
+            className="dad-btn-primary text-alphaai-sm py-2.5 px-5"
+          >
+            Add Project
+          </button>
         </div>
       )}
 
@@ -512,13 +545,30 @@ function HomeTab({ householdId }: { householdId: string }) {
                 <p className="text-alphaai-xs text-muted-foreground mt-1">{project.description}</p>
               )}
             </div>
-            <button
-              onClick={() => deleteProject(householdId, project.id)}
-              className="text-alphaai-3xs text-error/60 flex-shrink-0"
-              aria-label="Remove project"
-            >
-              <span className="material-symbols-outlined text-[16px]">close</span>
-            </button>
+            {confirmDeleteId === project.id ? (
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  onClick={() => { deleteProject(householdId, project.id); setConfirmDeleteId(null); }}
+                  className="text-alphaai-3xs text-error font-semibold underline"
+                >
+                  Confirm
+                </button>
+                <button
+                  onClick={() => setConfirmDeleteId(null)}
+                  className="text-alphaai-3xs text-muted-foreground underline"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmDeleteId(project.id)}
+                className="text-alphaai-3xs text-error/60 flex-shrink-0"
+                aria-label="Remove project"
+              >
+                <span className="material-symbols-outlined dad-icon-xs">close</span>
+              </button>
+            )}
           </div>
           <div className="flex gap-2 mt-3">
             <Link
@@ -559,6 +609,7 @@ function HomeTab({ householdId }: { householdId: string }) {
             <select
               value={form.area ?? "other"}
               onChange={(e) => setForm({ ...form, area: e.target.value as HomeProjectArea })}
+              aria-label="Project area"
               className="dad-input"
             >
               {(["interior", "exterior", "yard", "other"] as HomeProjectArea[]).map((a) => (
@@ -601,7 +652,7 @@ function HomeTab({ householdId }: { householdId: string }) {
           onClick={() => setShowForm(true)}
           className="w-full dad-card p-4 flex items-center justify-center gap-2 text-alphaai-sm text-brand font-medium hover:bg-surface-container-low transition-colors"
         >
-          <span className="material-symbols-outlined text-[18px]">add</span>
+          <span className="material-symbols-outlined dad-icon-sm">add</span>
           Add project
         </button>
       )}
@@ -618,6 +669,7 @@ function TripsTab({ householdId }: { householdId: string }) {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<TripPlanCreateRequest>({ destination: "" });
   const [tripFilter, setTripFilter] = useState<"all" | "planning" | "booked" | "completed">("all");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTrips(householdId);
@@ -670,7 +722,7 @@ function TripsTab({ householdId }: { householdId: string }) {
 
       {trips.length === 0 && !isLoading && (
         <div className="dad-card p-6 text-center space-y-2">
-          <span className="material-symbols-outlined text-[40px] text-muted-foreground">
+          <span className="material-symbols-outlined dad-icon-2xl text-muted-foreground">
             flight_takeoff
           </span>
           <p className="text-alphaai-sm text-muted-foreground">
@@ -700,13 +752,30 @@ function TripsTab({ householdId }: { householdId: string }) {
                 <p className="text-alphaai-xs text-muted-foreground mt-1">{trip.notes}</p>
               )}
             </div>
-            <button
-              onClick={() => deleteTrip(householdId, trip.id)}
-              className="text-alphaai-3xs text-error/60 flex-shrink-0"
-              aria-label="Remove trip"
-            >
-              <span className="material-symbols-outlined text-[16px]">close</span>
-            </button>
+            {confirmDeleteId === trip.id ? (
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  onClick={() => { deleteTrip(householdId, trip.id); setConfirmDeleteId(null); }}
+                  className="text-alphaai-3xs text-error font-semibold underline"
+                >
+                  Confirm
+                </button>
+                <button
+                  onClick={() => setConfirmDeleteId(null)}
+                  className="text-alphaai-3xs text-muted-foreground underline"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmDeleteId(trip.id)}
+                className="text-alphaai-3xs text-error/60 flex-shrink-0"
+                aria-label="Remove trip"
+              >
+                <span className="material-symbols-outlined dad-icon-xs">close</span>
+              </button>
+            )}
           </div>
           <div className="flex gap-2 mt-3">
             <Link
@@ -802,7 +871,7 @@ function TripsTab({ householdId }: { householdId: string }) {
           onClick={() => setShowForm(true)}
           className="w-full dad-card p-4 flex items-center justify-center gap-2 text-alphaai-sm text-brand font-medium hover:bg-surface-container-low transition-colors"
         >
-          <span className="material-symbols-outlined text-[18px]">add</span>
+          <span className="material-symbols-outlined dad-icon-sm">add</span>
           Plan a trip
         </button>
       )}
@@ -825,6 +894,7 @@ function RoutinesTab({ householdId }: { householdId: string }) {
 
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<AutomationRoutineCreateRequest>({ name: "" });
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchRoutines(householdId);
@@ -851,7 +921,7 @@ function RoutinesTab({ householdId }: { householdId: string }) {
       )}
 
       <div className="dad-card p-3 flex items-center gap-2 bg-surface-container-low/50">
-        <span className="material-symbols-outlined text-[16px] text-muted-foreground">info</span>
+        <span className="material-symbols-outlined dad-icon-xs text-muted-foreground">info</span>
         <p className="text-alphaai-3xs text-muted-foreground">
           Routines are checklist-driven reminders — not connected to smart-home devices in this
           version.
@@ -859,14 +929,20 @@ function RoutinesTab({ householdId }: { householdId: string }) {
       </div>
 
       {routines.length === 0 && !isLoading && (
-        <div className="dad-card p-6 text-center space-y-2">
-          <span className="material-symbols-outlined text-[40px] text-muted-foreground">
+        <div className="dad-card p-6 text-center space-y-3">
+          <span className="material-symbols-outlined dad-icon-2xl text-muted-foreground">
             routine
           </span>
           <p className="text-alphaai-sm text-muted-foreground">
             No routines yet. Create a named sequence of reminders and checklist steps for recurring
             household moments.
           </p>
+          <button
+            onClick={() => setShowForm(true)}
+            className="dad-btn-primary text-alphaai-sm py-2.5 px-5"
+          >
+            Create Routine
+          </button>
         </div>
       )}
 
@@ -883,13 +959,30 @@ function RoutinesTab({ householdId }: { householdId: string }) {
                 {routine.name}
               </p>
             </div>
-            <button
-              onClick={() => deleteRoutine(householdId, routine.id)}
-              className="text-alphaai-3xs text-error/60 flex-shrink-0"
-              aria-label="Remove routine"
-            >
-              <span className="material-symbols-outlined text-[16px]">close</span>
-            </button>
+            {confirmDeleteId === routine.id ? (
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  onClick={() => { deleteRoutine(householdId, routine.id); setConfirmDeleteId(null); }}
+                  className="text-alphaai-3xs text-error font-semibold underline"
+                >
+                  Confirm
+                </button>
+                <button
+                  onClick={() => setConfirmDeleteId(null)}
+                  className="text-alphaai-3xs text-muted-foreground underline"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmDeleteId(routine.id)}
+                className="text-alphaai-3xs text-error/60 flex-shrink-0"
+                aria-label="Remove routine"
+              >
+                <span className="material-symbols-outlined dad-icon-xs">close</span>
+              </button>
+            )}
           </div>
           {routine.steps.length > 0 && (
             <ol className="mt-2 space-y-1 pl-6">
@@ -923,6 +1016,7 @@ function RoutinesTab({ householdId }: { householdId: string }) {
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             placeholder="Routine name (e.g. Sunday Evening Wind-Down)"
+            aria-label="Routine name"
             className="dad-input w-full"
           />
           <p className="text-alphaai-3xs text-muted-foreground">
@@ -949,7 +1043,7 @@ function RoutinesTab({ householdId }: { householdId: string }) {
           onClick={() => setShowForm(true)}
           className="w-full dad-card p-4 flex items-center justify-center gap-2 text-alphaai-sm text-brand font-medium hover:bg-surface-container-low transition-colors"
         >
-          <span className="material-symbols-outlined text-[18px]">add</span>
+          <span className="material-symbols-outlined dad-icon-sm">add</span>
           New routine
         </button>
       )}
@@ -999,8 +1093,8 @@ function HouseholdOpsContent() {
     <div className="min-h-screen bg-background">
       <header className="fixed top-0 left-0 right-0 z-40 bg-background border-b border-border-subtle/20">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
-          <Link href="/dashboard" className="text-muted-foreground">
-            <span className="material-symbols-outlined text-[22px]">arrow_back</span>
+          <Link href="/dashboard" aria-label="Back to dashboard" className="text-muted-foreground">
+            <span className="material-symbols-outlined dad-icon-md">arrow_back</span>
           </Link>
           <div>
             <h1 className="font-headline text-alphaai-xl font-bold text-foreground">
@@ -1014,7 +1108,7 @@ function HouseholdOpsContent() {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 pt-24 pb-28 space-y-4">
+      <main id="main-content" className="max-w-lg mx-auto px-4 pt-24 pb-28 space-y-4">
         {!isPremium ? (
           <PremiumGate />
         ) : !householdId ? (
@@ -1044,6 +1138,8 @@ function HouseholdOpsContent() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
+                  aria-selected={activeTab === tab.id}
+                  role="tab"
                   className={`flex-1 flex flex-col items-center gap-0.5 py-2 rounded-xl transition-colors text-alphaai-3xs font-medium ${
                     activeTab === tab.id
                       ? "bg-brand text-white"
@@ -1051,7 +1147,7 @@ function HouseholdOpsContent() {
                   }`}
                 >
                   <span
-                    className="material-symbols-outlined text-[18px]"
+                    className="material-symbols-outlined dad-icon-sm"
                     style={{
                       fontVariationSettings: activeTab === tab.id ? "'FILL' 1" : "'FILL' 0",
                     }}

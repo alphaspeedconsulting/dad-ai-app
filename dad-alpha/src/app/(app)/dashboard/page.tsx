@@ -54,7 +54,7 @@ export default function DashboardPage() {
             href="/settings"
             className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center"
           >
-            <span className="material-symbols-outlined text-[20px] text-foreground">
+            <span className="material-symbols-outlined dad-icon-md text-foreground">
               notifications
             </span>
             <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-error rounded-full border-2 border-background" />
@@ -62,11 +62,11 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 pt-24 pb-24 space-y-4">
+      <main id="main-content" className="max-w-lg mx-auto px-4 pt-24 pb-24 space-y-4">
         {/* Partner Sync Digest */}
         <section className="dad-card p-4">
           <div className="flex items-center gap-2 mb-3">
-            <span className="material-symbols-outlined text-[20px] text-brand">sync</span>
+            <span className="material-symbols-outlined dad-icon-md text-brand">sync</span>
             <h2 className="font-headline text-alphaai-base font-semibold text-foreground">
               Partner Sync
             </h2>
@@ -99,7 +99,7 @@ export default function DashboardPage() {
         {/* Weekly Plan */}
         <section className="dad-card p-4">
           <div className="flex items-center gap-2 mb-3">
-            <span className="material-symbols-outlined text-[20px] text-brand">calendar_month</span>
+            <span className="material-symbols-outlined dad-icon-md text-brand">calendar_month</span>
             <h2 className="font-headline text-alphaai-base font-semibold text-foreground">
               This Week
             </h2>
@@ -130,7 +130,7 @@ export default function DashboardPage() {
         {/* Calendar Conflicts */}
         <section className="dad-card p-4 border-l-4 border-secondary">
           <div className="flex items-center gap-2 mb-2">
-            <span className="material-symbols-outlined text-[20px] text-secondary">warning</span>
+            <span className="material-symbols-outlined dad-icon-md text-secondary">warning</span>
             <h2 className="font-headline text-alphaai-base font-semibold text-foreground">
               Schedule Conflicts
             </h2>
@@ -154,7 +154,7 @@ export default function DashboardPage() {
               className="dad-card p-4 flex flex-col items-center gap-2 hover:bg-surface-container-low transition-colors"
             >
               <div className="w-12 h-12 bg-brand-glow/30 rounded-xl flex items-center justify-center">
-                <span className="material-symbols-outlined text-[24px] text-brand">checklist</span>
+                <span className="material-symbols-outlined dad-icon-lg text-brand">checklist</span>
               </div>
               <span className="text-alphaai-sm font-medium text-foreground">New Checklist</span>
             </Link>
@@ -163,7 +163,7 @@ export default function DashboardPage() {
               className="dad-card p-4 flex flex-col items-center gap-2 hover:bg-surface-container-low transition-colors"
             >
               <div className="w-12 h-12 bg-secondary-container/50 rounded-xl flex items-center justify-center">
-                <span className="material-symbols-outlined text-[24px] text-secondary">receipt_long</span>
+                <span className="material-symbols-outlined dad-icon-lg text-secondary">receipt_long</span>
               </div>
               <span className="text-alphaai-sm font-medium text-foreground">Track Expense</span>
             </Link>
@@ -172,7 +172,7 @@ export default function DashboardPage() {
               className="dad-card p-4 flex flex-col items-center gap-2 hover:bg-surface-container-low transition-colors"
             >
               <div className="w-12 h-12 bg-tertiary-container/50 rounded-xl flex items-center justify-center">
-                <span className="material-symbols-outlined text-[24px] text-tertiary">school</span>
+                <span className="material-symbols-outlined dad-icon-lg text-tertiary">school</span>
               </div>
               <span className="text-alphaai-sm font-medium text-foreground">School Hub</span>
             </Link>
@@ -181,7 +181,7 @@ export default function DashboardPage() {
               className="dad-card p-4 flex flex-col items-center gap-2 hover:bg-surface-container-low transition-colors"
             >
               <div className="w-12 h-12 bg-brand-glow/20 rounded-xl flex items-center justify-center">
-                <span className="material-symbols-outlined text-[24px] text-brand">home_repair_service</span>
+                <span className="material-symbols-outlined dad-icon-lg text-brand">home_repair_service</span>
               </div>
               <span className="text-alphaai-sm font-medium text-foreground">Household Ops</span>
             </Link>
@@ -201,7 +201,7 @@ export default function DashboardPage() {
               { icon: "calendar_month", text: "Weekly plan generated for Mar 24-30", time: "Yesterday", color: "text-brand" },
             ].map((item, i) => (
               <div key={i} className="dad-card p-3 flex items-center gap-3">
-                <span className={`material-symbols-outlined text-[18px] ${item.color}`}>
+                <span className={`material-symbols-outlined dad-icon-sm ${item.color}`}>
                   {item.icon}
                 </span>
                 <p className="text-alphaai-sm text-foreground flex-1">{item.text}</p>

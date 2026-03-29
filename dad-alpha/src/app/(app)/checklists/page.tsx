@@ -96,7 +96,7 @@ export default function ChecklistsPage() {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 pt-24 pb-24 space-y-4">
+      <main id="main-content" className="max-w-lg mx-auto px-4 pt-24 pb-24 space-y-4">
         {/* Generate checklist */}
         <div className="dad-card p-4">
           <label className="text-alphaai-sm font-medium text-foreground block mb-2">
