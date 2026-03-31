@@ -1,15 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useAuthStore } from "@/stores/auth-store";
 import { EmptyState } from "@/components/shared/EmptyState";
+import * as api from "@/lib/api-client";
+import type { Expense } from "@/types/api-contracts";
 
-interface Expense {
-  id: string;
-  amount: number;
-  category: string;
-  merchant: string;
-  date: string;
-}
+const isMockMode = process.env.NEXT_PUBLIC_MOCK_MODE === "true";
 
 const CATEGORIES = ["Groceries", "Gas", "Dining", "Education", "Sports", "Healthcare", "Other"];
 const CATEGORY_ICONS: Record<string, string> = {
@@ -23,20 +20,38 @@ const CATEGORY_ICONS: Record<string, string> = {
 };
 
 const MOCK_EXPENSES: Expense[] = [
-  { id: "e1", amount: 127.50, category: "Groceries", merchant: "Costco", date: "2026-03-25" },
-  { id: "e2", amount: 47.00, category: "Gas", merchant: "Shell", date: "2026-03-24" },
-  { id: "e3", amount: 35.99, category: "Dining", merchant: "Chipotle", date: "2026-03-24" },
-  { id: "e4", amount: 89.00, category: "Education", merchant: "Math Tutor", date: "2026-03-23" },
-  { id: "e5", amount: 45.00, category: "Sports", merchant: "Soccer League", date: "2026-03-22" },
-  { id: "e6", amount: 12.99, category: "Groceries", merchant: "Target", date: "2026-03-22" },
+  { id: "e1", amount: 127.50, category: "Groceries", merchant: "Costco", date: "2026-03-25", receipt_url: null, source: "manual" },
+  { id: "e2", amount: 47.00, category: "Gas", merchant: "Shell", date: "2026-03-24", receipt_url: null, source: "manual" },
+  { id: "e3", amount: 35.99, category: "Dining", merchant: "Chipotle", date: "2026-03-24", receipt_url: null, source: "manual" },
+  { id: "e4", amount: 89.00, category: "Education", merchant: "Math Tutor", date: "2026-03-23", receipt_url: null, source: "manual" },
+  { id: "e5", amount: 45.00, category: "Sports", merchant: "Soccer League", date: "2026-03-22", receipt_url: null, source: "manual" },
+  { id: "e6", amount: 12.99, category: "Groceries", merchant: "Target", date: "2026-03-22", receipt_url: null, source: "manual" },
 ];
 
+function getCategoryIcon(category: string): string {
+  const exact = CATEGORY_ICONS[category];
+  if (exact) return exact;
+  const normalized = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+  return CATEGORY_ICONS[normalized] ?? "receipt_long";
+}
+
 export default function ExpensesPage() {
-  const [expenses, setExpenses] = useState<Expense[]>(MOCK_EXPENSES);
+  const householdId = useAuthStore((s) => s.user?.household_id);
+  const [expenses, setExpenses] = useState<Expense[]>(isMockMode ? MOCK_EXPENSES : []);
+  const [isLoading, setIsLoading] = useState(!isMockMode);
   const [showForm, setShowForm] = useState(false);
   const [amount, setAmount] = useState("");
   const [merchant, setMerchant] = useState("");
   const [category, setCategory] = useState("Groceries");
+
+  useEffect(() => {
+    if (isMockMode || !householdId) return;
+    api.expenses
+      .list(householdId)
+      .then(setExpenses)
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
+  }, [householdId]);
 
   const totalMonth = expenses.reduce((sum, e) => sum + e.amount, 0);
   const byCategory = expenses.reduce<Record<string, number>>((acc, e) => {
@@ -44,16 +59,28 @@ export default function ExpensesPage() {
     return acc;
   }, {});
 
-  const handleAdd = () => {
-    if (!amount || !merchant.trim()) return;
-    const newExpense: Expense = {
-      id: `e_${Date.now()}`,
+  const handleAdd = async () => {
+    if (!amount || !merchant.trim() || !householdId) return;
+    const body: Partial<Expense> = {
       amount: parseFloat(amount),
       category,
       merchant: merchant.trim(),
       date: new Date().toISOString().split("T")[0],
+      source: "manual",
     };
-    setExpenses((prev) => [newExpense, ...prev]);
+    if (isMockMode) {
+      setExpenses((prev) => [
+        { ...body, id: `e_${Date.now()}`, receipt_url: null } as Expense,
+        ...prev,
+      ]);
+    } else {
+      try {
+        const created = await api.expenses.create(householdId, body);
+        setExpenses((prev) => [created, ...prev]);
+      } catch {
+        // No toast system yet — expense addition silently no-ops on API failure
+      }
+    }
     setAmount("");
     setMerchant("");
     setShowForm(false);
@@ -84,7 +111,7 @@ export default function ExpensesPage() {
         <div className="dad-gradient-hero rounded-2xl p-5 text-on-primary">
           <p className="text-alphaai-xs opacity-80">This month</p>
           <p className="font-headline text-alphaai-3xl font-bold">
-            ${totalMonth.toFixed(2)}
+            {isLoading ? "—" : `$${totalMonth.toFixed(2)}`}
           </p>
           <div className="flex gap-4 mt-3">
             {Object.entries(byCategory)
@@ -146,36 +173,45 @@ export default function ExpensesPage() {
           </div>
         )}
 
+        {/* Loading state */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <span className="w-6 h-6 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+
         {/* Expense list */}
-        {expenses.length === 0 ? (
+        {!isLoading && expenses.length === 0 ? (
           <EmptyState
             icon="receipt_long"
             title="No expenses yet"
             description="Tap + to track your first family expense."
           />
         ) : (
-          <div className="space-y-2">
-            {expenses.map((exp) => (
-              <div key={exp.id} className="dad-card p-3 flex items-center gap-3">
-                <div className="w-10 h-10 bg-surface-container rounded-xl flex items-center justify-center flex-shrink-0">
-                  <span className="material-symbols-outlined dad-icon-sm text-brand">
-                    {CATEGORY_ICONS[exp.category] ?? "receipt_long"}
+          !isLoading && (
+            <div className="space-y-2">
+              {expenses.map((exp) => (
+                <div key={exp.id} className="dad-card p-3 flex items-center gap-3">
+                  <div className="w-10 h-10 bg-surface-container rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span className="material-symbols-outlined dad-icon-sm text-brand">
+                      {getCategoryIcon(exp.category)}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-alphaai-sm font-medium text-foreground truncate">
+                      {exp.merchant ?? "Unknown merchant"}
+                    </p>
+                    <p className="text-alphaai-3xs text-muted-foreground">
+                      {exp.category} · {exp.date}
+                    </p>
+                  </div>
+                  <span className="text-alphaai-base font-semibold text-foreground flex-shrink-0">
+                    ${exp.amount.toFixed(2)}
                   </span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-alphaai-sm font-medium text-foreground truncate">
-                    {exp.merchant}
-                  </p>
-                  <p className="text-alphaai-3xs text-muted-foreground">
-                    {exp.category} · {exp.date}
-                  </p>
-                </div>
-                <span className="text-alphaai-base font-semibold text-foreground flex-shrink-0">
-                  ${exp.amount.toFixed(2)}
-                </span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )
         )}
       </main>
     </div>

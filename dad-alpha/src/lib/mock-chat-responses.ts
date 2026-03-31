@@ -427,13 +427,242 @@ What would you like to do?`,
   },
 ];
 
+// ─── Tutor Finder ────────────────────────────────────────────────────────────
+
+const TUTOR_RESPONSES: MockResponse[] = [
+  {
+    keywords: ["find", "tutor", "help", "need", "struggling", "math", "reading", "science"],
+    content: `**Tutor recommendations for your area:**
+
+| Tutor | Subject | Rate | Availability |
+|-------|---------|------|--------------|
+| Sarah M. | Math (K–8) | $45/hr | Mon, Wed, Fri |
+| James T. | Reading/English | $40/hr | Tue, Thu |
+| Lisa R. | Science (4–8) | $50/hr | Weekends |
+
+All tutors are background-checked and have 4.8+ ratings.
+
+What subject does your child need help with?`,
+    intent_type: "status_query",
+    quick_actions: [
+      { label: "View all tutors", action: "view_tutors" },
+      { label: "Book a session", action: "book_session" },
+    ],
+  },
+  {
+    keywords: ["book", "schedule", "session", "appointment"],
+    content: `**Session booking:**
+
+To book a tutoring session, I'll need:
+1. **Subject** — what area needs support?
+2. **Grade level** — which child and what grade?
+3. **Preferred time** — weekday or weekend?
+
+Once I know these, I can match you with the best available tutor and schedule your first session.`,
+    intent_type: "calendar_crud",
+    quick_actions: [
+      { label: "View tutors", action: "view_tutors" },
+      { label: "Add to calendar", action: "create_event", payload: { title: "Tutoring session" } },
+    ],
+  },
+  {
+    keywords: ["progress", "update", "how is", "doing"],
+    content: `**Tutoring progress summary:**
+
+Your child has had **4 sessions** this month with Sarah M. (Math).
+
+- **Pre-assessment:** 62% proficiency
+- **Current:** 78% proficiency
+- **Goal:** 85% by end of quarter
+
+Sarah notes: *"Great improvement in fractions! Focus area this week: long division."*`,
+    intent_type: "status_query",
+    quick_actions: [
+      { label: "View sessions", action: "view_tutors" },
+      { label: "Book next session", action: "book_session" },
+    ],
+  },
+];
+
+// ─── Health Hub ──────────────────────────────────────────────────────────────
+
+const HEALTH_RESPONSES: MockResponse[] = [
+  {
+    keywords: ["appointment", "checkup", "doctor", "dentist", "well visit", "vaccine"],
+    content: `**Upcoming health appointments:**
+
+| Who | Visit | Date | Status |
+|-----|-------|------|--------|
+| Emma | 9-year well visit | Apr 15 | Scheduled |
+| Liam | Dentist cleaning | Apr 22 | Scheduled |
+| You | Annual physical | May 3 | Pending confirmation |
+
+**Vaccines due:** Emma is due for Tdap booster at next visit.`,
+    intent_type: "status_query",
+    quick_actions: [
+      { label: "Add to calendar", action: "create_event", payload: { title: "Doctor appointment" } },
+      { label: "View health records", action: "view_health_records" },
+    ],
+  },
+  {
+    keywords: ["medication", "allergy", "allergies", "prescription"],
+    content: `**Family health records:**
+
+**Emma (9):**
+- Allergy: Peanuts (carries EpiPen)
+- Medication: Cetirizine 5mg (seasonal allergies, as needed)
+
+**Liam (7):**
+- No known allergies
+- No current medications
+
+**Emergency contacts:** Dr. Peterson (pediatrician) — (555) 234-5678`,
+    intent_type: "status_query",
+    quick_actions: [
+      { label: "Update records", action: "view_health_records" },
+      { label: "View appointments", action: "create_event", payload: { title: "Health check" } },
+    ],
+  },
+  {
+    keywords: ["help", "what can", "do"],
+    content: `I'm **Health Hub** — I keep your family's health organized. I can:
+
+- **Track appointments** — doctor, dentist, specialist visits
+- **Manage medications** and allergy records
+- **Send reminders** for upcoming checkups
+- **Store emergency contacts** and insurance info
+
+What health task can I help with?`,
+    intent_type: "status_query",
+    quick_actions: [
+      { label: "View appointments", action: "view_health_records" },
+      { label: "Check vaccinations", action: "view_health_records" },
+    ],
+  },
+];
+
+// ─── Sleep Tracker ───────────────────────────────────────────────────────────
+
+const SLEEP_RESPONSES: MockResponse[] = [
+  {
+    keywords: ["sleep", "bedtime", "routine", "tired", "rest", "last night"],
+    content: `**Family sleep summary — last 7 days:**
+
+| Who | Avg Bedtime | Avg Wake | Avg Duration | Quality |
+|-----|------------|----------|--------------|---------|
+| Emma | 9:10 PM | 7:05 AM | 9h 55m | ✅ Great |
+| Liam | 8:45 PM | 6:55 AM | 10h 10m | ✅ Great |
+| You | 11:35 PM | 6:30 AM | 6h 55m | ⚠️ Low |
+
+**Recommendation:** You're 1h short of the 8-hour target this week. Consider a 10:30 PM cutoff.`,
+    intent_type: "status_query",
+    quick_actions: [
+      { label: "Set bedtime reminder", action: "set_sleep_reminder" },
+      { label: "View sleep trends", action: "view_sleep_trends" },
+    ],
+  },
+  {
+    keywords: ["reminder", "alarm", "wake", "schedule"],
+    content: `**Current sleep schedule:**
+
+- **Kids bedtime:** 9:00 PM reminder ✅
+- **Your bedtime:** No reminder set ⚠️
+- **Morning alarm:** 6:30 AM ✅
+
+Want me to set a bedtime reminder for you? A consistent sleep schedule improves energy levels significantly.`,
+    intent_type: "status_query",
+    quick_actions: [
+      { label: "Set my bedtime reminder", action: "set_sleep_reminder" },
+      { label: "View trends", action: "view_sleep_trends" },
+    ],
+  },
+  {
+    keywords: ["help", "what can", "do"],
+    content: `I'm **Sleep Tracker** — I monitor and improve your family's sleep. I can:
+
+- **Track sleep patterns** for the whole family
+- **Set bedtime reminders** so everyone gets enough rest
+- **Identify trends** and flag potential issues
+- **Suggest improvements** based on your schedule
+
+What would you like to track?`,
+    intent_type: "status_query",
+    quick_actions: [
+      { label: "View sleep summary", action: "view_sleep_trends" },
+      { label: "Set bedtime reminder", action: "set_sleep_reminder" },
+    ],
+  },
+];
+
+// ─── Self-Care Reminder ──────────────────────────────────────────────────────
+
+const SELF_CARE_RESPONSES: MockResponse[] = [
+  {
+    keywords: ["stress", "tired", "overwhelmed", "break", "rest", "burnout"],
+    content: `**Check-in: How are you doing, Dad?**
+
+Based on your recent activity — 18 tasks completed, 7 events managed — you've had a full week.
+
+**Quick wins for today:**
+- 🚶 10-minute walk during lunch
+- 📱 5-minute phone-free focus time
+- 💧 Hit your 8-glass water goal
+
+You can't pour from an empty cup. What's one thing you can do for yourself today?`,
+    intent_type: "status_query",
+    quick_actions: [
+      { label: "Log check-in", action: "log_checkin" },
+      { label: "Schedule workout", action: "schedule_workout" },
+    ],
+  },
+  {
+    keywords: ["workout", "exercise", "gym", "run", "fitness"],
+    content: `**Your activity this week:**
+
+- Mon: 20-min walk ✅
+- Tue: Rest day
+- Wed: No activity ⚠️
+- Thu: 30-min jog ✅
+- Fri–Sun: Not yet logged
+
+**Goal:** 3 active days/week — you're at 2/3 for this week. One more to go!
+
+Want me to add a workout reminder for this weekend?`,
+    intent_type: "status_query",
+    quick_actions: [
+      { label: "Schedule workout", action: "schedule_workout" },
+      { label: "Add to calendar", action: "create_event", payload: { title: "Workout" } },
+    ],
+  },
+  {
+    keywords: ["help", "what can", "do"],
+    content: `I'm your **Self-Care Reminder** — I help you take care of yourself so you can show up for your family. I can:
+
+- **Daily check-ins** — quick prompts to stay grounded
+- **Activity tracking** — workouts, walks, and movement
+- **Stress signals** — flag when you've been overloaded
+- **Micro-breaks** — short recharge suggestions
+
+How are you feeling today?`,
+    intent_type: "status_query",
+    quick_actions: [
+      { label: "Log today's check-in", action: "log_checkin" },
+      { label: "Schedule a workout", action: "schedule_workout" },
+    ],
+  },
+];
+
 // ─── Response Selection ──────────────────────────────────────────────────────
 
-const AGENT_RESPONSES: Record<string, MockResponse[]> = {
+export const AGENT_RESPONSES: Record<string, MockResponse[]> = {
   calendar_whiz: CALENDAR_RESPONSES,
   school_event_hub: SCHOOL_RESPONSES,
   budget_buddy: BUDGET_RESPONSES,
   grocery_guru: GROCERY_RESPONSES,
+  tutor_finder: TUTOR_RESPONSES,
+  health_hub: HEALTH_RESPONSES,
+  sleep_tracker: SLEEP_RESPONSES,
+  self_care_reminder: SELF_CARE_RESPONSES,
 };
 
 /**

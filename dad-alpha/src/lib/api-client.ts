@@ -16,17 +16,29 @@ import type {
   CalendarEventCreateRequest,
   CalendarEventUpdateRequest,
   CalendarEventsResponse,
+  CaregiverAccess,
+  CaregiverInviteRequest,
+  CaregiverViewData,
   Checklist,
   ChatRequest,
   ChatResponse,
   CheckoutTrialRequest,
   CheckoutTrialResponse,
+  CoParentBalance,
   ConsentRequest,
   ConsentResponse,
   ConsentStatusResponse,
+  EmergencyActivateRequest,
+  EmergencyStatus,
   Expense,
   ExpenseSummary,
+  FamilyGoal,
+  FamilyTemplate,
+  GoalCreateRequest,
+  GoalUpdateRequest,
   GoogleCalendarConnectionStatus,
+  GoogleCalendarListResponse,
+  GoogleCalendarSelectRequest,
   GroceryList,
   HomeProject,
   HomeProjectCreateRequest,
@@ -40,20 +52,42 @@ import type {
   LLMCostReport,
   NotificationsResponse,
   PermissionSlip,
+  PromotionValidateResponse,
+  ReferralInfo,
+  ReferralRedeemRequest,
+  ReferralRedeemResponse,
+  SeasonalPacksResponse,
   SelfCareCreateRequest,
   SelfCareListResponse,
   SelfCareReminder,
+  ShareLinkRequest,
+  ShareLinkResponse,
+  SharePreviewResponse,
+  SharedInboxCreateRequest,
+  SharedInboxItem,
+  SharedInboxListResponse,
+  SharedInboxUpdateRequest,
   SyncDigestResponse,
   SleepHistoryResponse,
   SleepLogRequest,
   TaskListResponse,
+  TemplateCreateRequest,
+  TemplateListResponse,
   TripPlan,
   TripPlanCreateRequest,
   Vehicle,
   VehicleCreateRequest,
   VehicleServiceItem,
   VehicleServiceItemCreateRequest,
+  ViralEvent,
+  VillageFeedResponse,
+  VillagePost,
+  VillageComment,
+  VillagePostCategory,
+  VillagePostCreateRequest,
+  VoiceBriefScript,
   WeeklyPlan,
+  WeeklyWinSummary,
   CalendarConflict,
   WellnessStreak,
 } from "@/types/api-contracts";
@@ -70,6 +104,11 @@ export class ApiError extends Error {
   ) {
     super(detail);
     this.name = "ApiError";
+  }
+
+  /** True when the backend returns 402/403 indicating a tier upgrade is required */
+  get isUpgradeRequired(): boolean {
+    return this.status === 402 || this.status === 403;
   }
 }
 
@@ -279,6 +318,8 @@ export const stripe = {
     request<CheckoutTrialResponse>("/api/stripe/checkout", { method: "POST", body: JSON.stringify(body) }),
   getPortalUrl: () =>
     request<{ url: string }>("/api/stripe/portal"),
+  validatePromoCode: (code: string) =>
+    request<PromotionValidateResponse>(`/api/stripe/promo/${encodeURIComponent(code)}`),
 };
 
 // Sleep
@@ -401,4 +442,162 @@ export const googleCalendar = {
     }),
   disconnect: () =>
     request<void>("/api/integrations/google-calendar/disconnect", { method: "POST" }),
+  listCalendars: () =>
+    request<GoogleCalendarListResponse>("/api/integrations/google-calendar/calendars"),
+  selectCalendars: (body: GoogleCalendarSelectRequest) =>
+    request<void>("/api/integrations/google-calendar/calendars/select", {
+      method: "POST", body: JSON.stringify(body),
+    }),
+};
+
+// Shared Inbox — Co-parent task sharing
+export const sharedInbox = {
+  list: (householdId: string) =>
+    request<SharedInboxListResponse>(`/api/household/${householdId}/inbox`),
+  create: (householdId: string, body: SharedInboxCreateRequest) =>
+    request<SharedInboxItem>(`/api/household/${householdId}/inbox`, {
+      method: "POST", body: JSON.stringify(body),
+    }),
+  update: (householdId: string, itemId: string, body: SharedInboxUpdateRequest) =>
+    request<SharedInboxItem>(`/api/household/${householdId}/inbox/${itemId}`, {
+      method: "PUT", body: JSON.stringify(body),
+    }),
+  remove: (householdId: string, itemId: string) =>
+    request<void>(`/api/household/${householdId}/inbox/${itemId}`, { method: "DELETE" }),
+};
+
+// Weekly Wins
+export const wins = {
+  get: (householdId: string) =>
+    request<WeeklyWinSummary>(`/api/household/${householdId}/wins`),
+};
+
+// Share Links
+export const share = {
+  create: (householdId: string, body: ShareLinkRequest) =>
+    request<ShareLinkResponse>(`/api/household/${householdId}/share`, {
+      method: "POST", body: JSON.stringify(body),
+    }),
+  preview: (shareToken: string) =>
+    request<SharePreviewResponse>(`/api/share/${shareToken}`),
+};
+
+// Viral Analytics
+export const viral = {
+  track: (body: ViralEvent) =>
+    request<void>("/api/viral/events", { method: "POST", body: JSON.stringify(body) }),
+};
+
+// Co-Parent Balance
+export const balance = {
+  get: (householdId: string, period?: string) =>
+    request<CoParentBalance>(
+      `/api/household/${householdId}/balance${period ? `?period=${period}` : ""}`
+    ),
+};
+
+// Referral Engine
+export const referral = {
+  get: () => request<ReferralInfo>("/api/referral"),
+  redeem: (body: ReferralRedeemRequest) =>
+    request<ReferralRedeemResponse>("/api/referral/redeem", {
+      method: "POST", body: JSON.stringify(body),
+    }),
+};
+
+// Caregiver Mode
+export const caregivers = {
+  list: (householdId: string) =>
+    request<CaregiverAccess[]>(`/api/household/${householdId}/caregivers`),
+  invite: (householdId: string, body: CaregiverInviteRequest) =>
+    request<CaregiverAccess>(`/api/household/${householdId}/caregivers`, {
+      method: "POST", body: JSON.stringify(body),
+    }),
+  revoke: (householdId: string, caregiverId: string) =>
+    request<void>(`/api/household/${householdId}/caregivers/${caregiverId}`, { method: "DELETE" }),
+  view: (token: string) =>
+    request<CaregiverViewData>(`/api/caregiver/${token}`),
+};
+
+// Family Templates Marketplace
+export const templates = {
+  list: (category?: string) =>
+    request<TemplateListResponse>(`/api/templates${category ? `?category=${category}` : ""}`),
+  create: (body: TemplateCreateRequest) =>
+    request<FamilyTemplate>("/api/templates", { method: "POST", body: JSON.stringify(body) }),
+  apply: (householdId: string, templateId: string) =>
+    request<{ applied: boolean }>(`/api/household/${householdId}/templates/${templateId}/apply`, {
+      method: "POST",
+    }),
+};
+
+// Seasonal Intelligence Packs
+export const seasonal = {
+  list: () => request<SeasonalPacksResponse>("/api/seasonal"),
+  apply: (householdId: string, packId: string) =>
+    request<{ applied: boolean }>(`/api/household/${householdId}/seasonal/${packId}/apply`, {
+      method: "POST",
+    }),
+};
+
+// Family Goals
+export const goals = {
+  list: (householdId: string) =>
+    request<FamilyGoal[]>(`/api/household/${householdId}/goals`),
+  create: (householdId: string, body: GoalCreateRequest) =>
+    request<FamilyGoal>(`/api/household/${householdId}/goals`, {
+      method: "POST", body: JSON.stringify(body),
+    }),
+  update: (householdId: string, goalId: string, body: GoalUpdateRequest) =>
+    request<FamilyGoal>(`/api/household/${householdId}/goals/${goalId}`, {
+      method: "PUT", body: JSON.stringify(body),
+    }),
+  remove: (householdId: string, goalId: string) =>
+    request<void>(`/api/household/${householdId}/goals/${goalId}`, { method: "DELETE" }),
+};
+
+// Voice Morning Briefing
+export const voiceBrief = {
+  get: (householdId: string) =>
+    request<VoiceBriefScript>(`/api/household/${householdId}/voice-brief`),
+};
+
+// Emergency Mode
+export const emergency = {
+  activate: (householdId: string, body: EmergencyActivateRequest) =>
+    request<EmergencyStatus>(`/api/household/${householdId}/emergency/activate`, {
+      method: "POST", body: JSON.stringify(body),
+    }),
+  deactivate: (householdId: string) =>
+    request<EmergencyStatus>(`/api/household/${householdId}/emergency/deactivate`, {
+      method: "POST",
+    }),
+  status: (householdId: string) =>
+    request<EmergencyStatus>(`/api/household/${householdId}/emergency/status`),
+};
+
+// Dad's Community Feed
+export const village = {
+  feed: (params?: { category?: VillagePostCategory; cursor?: string; limit?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.category) qs.set("category", params.category);
+    if (params?.cursor) qs.set("cursor", params.cursor);
+    if (params?.limit) qs.set("limit", String(params.limit));
+    const q = qs.toString();
+    return request<VillageFeedResponse>(`/api/village${q ? `?${q}` : ""}`);
+  },
+  create: (body: VillagePostCreateRequest) =>
+    request<VillagePost>("/api/village", { method: "POST", body: JSON.stringify(body) }),
+  react: (postId: string, reaction: "heart" | "helpful" | "same") =>
+    request<VillagePost>(`/api/village/${postId}/react`, {
+      method: "POST", body: JSON.stringify({ reaction }),
+    }),
+  comments: (postId: string) =>
+    request<VillageComment[]>(`/api/village/${postId}/comments`),
+  comment: (postId: string, content: string) =>
+    request<VillageComment>(`/api/village/${postId}/comments`, {
+      method: "POST", body: JSON.stringify({ content }),
+    }),
+  report: (postId: string) =>
+    request<void>(`/api/village/${postId}/report`, { method: "POST" }),
 };

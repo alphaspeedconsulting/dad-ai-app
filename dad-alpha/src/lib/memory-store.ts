@@ -1,0 +1,451 @@
+/**
+ * Local Memory Store — Dad's Second Brain
+ *
+ * IndexedDB-backed persistent memory that stays on-device.
+ * Stores family context, quick notes, preferences, and chat history
+ * so agents can share knowledge and nothing is lost on reload.
+ *
+ * Stores:
+ *  - memory_items: Family facts, preferences, notes (cross-agent context)
+ *  - chat_history: Persisted chat messages per agent
+ *  - inbox: Quick capture items delegated to agents or co-parent
+ */
+
+import type { AgentType } from "@/types/api-contracts";
+
+const DB_NAME = "dad-alpha-memory";
+const DB_VERSION = 2;
+
+const MEMORY_STORE = "memory_items";
+const CHAT_HISTORY_STORE = "chat_history";
+const INBOX_STORE = "inbox";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+export type MemoryCategory =
+  | "family_fact"      // "Jake is allergic to peanuts"
+  | "preference"       // "We prefer organic produce"
+  | "quick_note"       // Brain-dump capture
+  | "agent_insight"    // Auto-extracted from agent conversations
+  | "routine"          // "Soccer practice every Tuesday at 4pm"
+  | "important_date";  // Birthdays, anniversaries, deadlines
+
+export interface MemoryItem {
+  id: string;
+  category: MemoryCategory;
+  content: string;
+  tags: string[];              // Searchable tags (e.g., agent types, member names)
+  source_agent?: AgentType;    // Which agent created this (if auto-extracted)
+  pinned: boolean;             // User-pinned items surface first
+  created_at: string;          // ISO datetime
+  updated_at: string;
+}
+
+// ---------------------------------------------------------------------------
+// Inbox Tasks — Quick capture → delegate to agent → track completion
+// ---------------------------------------------------------------------------
+
+export type InboxStatus = "captured" | "delegated" | "in_progress" | "done" | "dismissed";
+
+export interface InboxItem {
+  id: string;
+  content: string;                   // What needs to be done
+  assigned_agent?: AgentType;        // Which agent is handling it
+  assigned_to?: string;              // operator_id — assigned co-parent
+  assigned_to_name?: string;         // Display name of assignee
+  created_by_name?: string;          // Who created this task
+  shared_id?: string;                // Backend ID when synced to shared inbox
+  status: InboxStatus;
+  agent_response?: string;           // What the agent reported back
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PersistedChatMessage {
+  id: string;
+  agent_type: AgentType;
+  role: "user" | "agent";
+  content: string;
+  timestamp: string;
+}
+
+// ---------------------------------------------------------------------------
+// DB init
+// ---------------------------------------------------------------------------
+
+function openDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+
+    req.onupgradeneeded = () => {
+      const db = req.result;
+
+      if (!db.objectStoreNames.contains(MEMORY_STORE)) {
+        const store = db.createObjectStore(MEMORY_STORE, { keyPath: "id" });
+        store.createIndex("category", "category", { unique: false });
+        store.createIndex("tags", "tags", { unique: false, multiEntry: true });
+        store.createIndex("pinned", "pinned", { unique: false });
+        store.createIndex("updated_at", "updated_at", { unique: false });
+      }
+
+      if (!db.objectStoreNames.contains(CHAT_HISTORY_STORE)) {
+        const store = db.createObjectStore(CHAT_HISTORY_STORE, { keyPath: "id" });
+        store.createIndex("agent_type", "agent_type", { unique: false });
+        store.createIndex("timestamp", "timestamp", { unique: false });
+      }
+
+      if (!db.objectStoreNames.contains(INBOX_STORE)) {
+        const store = db.createObjectStore(INBOX_STORE, { keyPath: "id" });
+        store.createIndex("status", "status", { unique: false });
+        store.createIndex("assigned_agent", "assigned_agent", { unique: false });
+        store.createIndex("updated_at", "updated_at", { unique: false });
+      }
+    };
+
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Memory Items CRUD
+// ---------------------------------------------------------------------------
+
+export async function addMemory(
+  item: Omit<MemoryItem, "id" | "created_at" | "updated_at">
+): Promise<MemoryItem> {
+  const db = await openDB();
+  const now = new Date().toISOString();
+  const record: MemoryItem = {
+    ...item,
+    id: `mem_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    created_at: now,
+    updated_at: now,
+  };
+
+  const tx = db.transaction(MEMORY_STORE, "readwrite");
+  tx.objectStore(MEMORY_STORE).put(record);
+
+  return new Promise((resolve, reject) => {
+    tx.oncomplete = () => resolve(record);
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+export async function updateMemory(
+  id: string,
+  patch: Partial<Pick<MemoryItem, "content" | "category" | "tags" | "pinned">>
+): Promise<void> {
+  const db = await openDB();
+  const tx = db.transaction(MEMORY_STORE, "readwrite");
+  const store = tx.objectStore(MEMORY_STORE);
+  const req = store.get(id);
+
+  return new Promise((resolve, reject) => {
+    req.onsuccess = () => {
+      if (!req.result) {
+        reject(new Error(`Memory item ${id} not found`));
+        return;
+      }
+      const updated = {
+        ...req.result,
+        ...patch,
+        updated_at: new Date().toISOString(),
+      };
+      store.put(updated);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+export async function deleteMemory(id: string): Promise<void> {
+  const db = await openDB();
+  const tx = db.transaction(MEMORY_STORE, "readwrite");
+  tx.objectStore(MEMORY_STORE).delete(id);
+
+  return new Promise((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+export async function getAllMemories(): Promise<MemoryItem[]> {
+  const db = await openDB();
+  const tx = db.transaction(MEMORY_STORE, "readonly");
+  const req = tx.objectStore(MEMORY_STORE).getAll();
+
+  return new Promise((resolve, reject) => {
+    req.onsuccess = () => {
+      const items = (req.result as MemoryItem[]) ?? [];
+      // Pinned first, then by most recently updated
+      items.sort((a, b) => {
+        if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+        return b.updated_at.localeCompare(a.updated_at);
+      });
+      resolve(items);
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+export async function getMemoriesByCategory(
+  category: MemoryCategory
+): Promise<MemoryItem[]> {
+  const db = await openDB();
+  const tx = db.transaction(MEMORY_STORE, "readonly");
+  const index = tx.objectStore(MEMORY_STORE).index("category");
+  const req = index.getAll(category);
+
+  return new Promise((resolve, reject) => {
+    req.onsuccess = () => resolve((req.result as MemoryItem[]) ?? []);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+export async function getMemoriesByTag(tag: string): Promise<MemoryItem[]> {
+  const db = await openDB();
+  const tx = db.transaction(MEMORY_STORE, "readonly");
+  const index = tx.objectStore(MEMORY_STORE).index("tags");
+  const req = index.getAll(tag);
+
+  return new Promise((resolve, reject) => {
+    req.onsuccess = () => resolve((req.result as MemoryItem[]) ?? []);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+/**
+ * Search memories by text content (simple substring match).
+ */
+export async function searchMemories(query: string): Promise<MemoryItem[]> {
+  const all = await getAllMemories();
+  const lower = query.toLowerCase();
+  return all.filter(
+    (item) =>
+      item.content.toLowerCase().includes(lower) ||
+      item.tags.some((t) => t.toLowerCase().includes(lower))
+  );
+}
+
+/**
+ * Get context relevant to a specific agent — returns memories tagged
+ * with the agent type plus all pinned and family_fact items.
+ * This is what gets injected into agent conversations.
+ */
+export async function getAgentContext(agentType: AgentType): Promise<MemoryItem[]> {
+  const all = await getAllMemories();
+  return all.filter(
+    (item) =>
+      item.pinned ||
+      item.category === "family_fact" ||
+      item.category === "routine" ||
+      item.category === "important_date" ||
+      item.tags.includes(agentType)
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Chat History Persistence
+// ---------------------------------------------------------------------------
+
+export async function saveChatMessage(
+  msg: PersistedChatMessage
+): Promise<void> {
+  const db = await openDB();
+  const tx = db.transaction(CHAT_HISTORY_STORE, "readwrite");
+  tx.objectStore(CHAT_HISTORY_STORE).put(msg);
+
+  return new Promise((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+export async function getChatHistory(
+  agentType: AgentType
+): Promise<PersistedChatMessage[]> {
+  const db = await openDB();
+  const tx = db.transaction(CHAT_HISTORY_STORE, "readonly");
+  const index = tx.objectStore(CHAT_HISTORY_STORE).index("agent_type");
+  const req = index.getAll(agentType);
+
+  return new Promise((resolve, reject) => {
+    req.onsuccess = () => {
+      const msgs = (req.result as PersistedChatMessage[]) ?? [];
+      msgs.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+      resolve(msgs);
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+export async function clearChatHistory(agentType: AgentType): Promise<void> {
+  const db = await openDB();
+  const tx = db.transaction(CHAT_HISTORY_STORE, "readwrite");
+  const store = tx.objectStore(CHAT_HISTORY_STORE);
+  const index = store.index("agent_type");
+  const req = index.getAllKeys(agentType);
+
+  return new Promise((resolve, reject) => {
+    req.onsuccess = () => {
+      for (const key of req.result) {
+        store.delete(key);
+      }
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+export async function clearAllChatHistory(): Promise<void> {
+  const db = await openDB();
+  const tx = db.transaction(CHAT_HISTORY_STORE, "readwrite");
+  tx.objectStore(CHAT_HISTORY_STORE).clear();
+
+  return new Promise((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Inbox — Quick capture → Delegate → Track
+// ---------------------------------------------------------------------------
+
+export async function addInboxItem(
+  content: string,
+  assignedAgent?: AgentType
+): Promise<InboxItem> {
+  const db = await openDB();
+  const now = new Date().toISOString();
+  const item: InboxItem = {
+    id: `inbox_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    content,
+    assigned_agent: assignedAgent,
+    status: assignedAgent ? "delegated" : "captured",
+    created_at: now,
+    updated_at: now,
+  };
+
+  const tx = db.transaction(INBOX_STORE, "readwrite");
+  tx.objectStore(INBOX_STORE).put(item);
+
+  return new Promise((resolve, reject) => {
+    tx.oncomplete = () => resolve(item);
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+export async function updateInboxItem(
+  id: string,
+  patch: Partial<Pick<InboxItem, "status" | "assigned_agent" | "agent_response" | "content" | "assigned_to" | "assigned_to_name" | "created_by_name" | "shared_id">>
+): Promise<void> {
+  const db = await openDB();
+  const tx = db.transaction(INBOX_STORE, "readwrite");
+  const store = tx.objectStore(INBOX_STORE);
+  const req = store.get(id);
+
+  return new Promise((resolve, reject) => {
+    req.onsuccess = () => {
+      if (!req.result) {
+        reject(new Error(`Inbox item ${id} not found`));
+        return;
+      }
+      store.put({
+        ...req.result,
+        ...patch,
+        updated_at: new Date().toISOString(),
+      });
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+export async function deleteInboxItem(id: string): Promise<void> {
+  const db = await openDB();
+  const tx = db.transaction(INBOX_STORE, "readwrite");
+  tx.objectStore(INBOX_STORE).delete(id);
+
+  return new Promise((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+export async function getAllInboxItems(): Promise<InboxItem[]> {
+  const db = await openDB();
+  const tx = db.transaction(INBOX_STORE, "readonly");
+  const req = tx.objectStore(INBOX_STORE).getAll();
+
+  return new Promise((resolve, reject) => {
+    req.onsuccess = () => {
+      const items = (req.result as InboxItem[]) ?? [];
+      // Active items first (captured, delegated, in_progress), then done/dismissed
+      items.sort((a, b) => {
+        const statusOrder: Record<InboxStatus, number> = {
+          captured: 0,
+          delegated: 1,
+          in_progress: 2,
+          done: 3,
+          dismissed: 4,
+        };
+        const diff = statusOrder[a.status] - statusOrder[b.status];
+        if (diff !== 0) return diff;
+        return b.updated_at.localeCompare(a.updated_at);
+      });
+      resolve(items);
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+export async function getActiveInboxCount(): Promise<number> {
+  const items = await getAllInboxItems();
+  return items.filter((i) => i.status !== "done" && i.status !== "dismissed").length;
+}
+
+// ---------------------------------------------------------------------------
+// Migration — import chat history from legacy localStorage Zustand persist
+// Run once on first app load after this version is deployed.
+// ---------------------------------------------------------------------------
+
+const MIGRATION_KEY = "dad-alpha-chat-migrated-v1";
+
+export async function migrateFromLocalStorage(): Promise<void> {
+  if (typeof window === "undefined") return;
+  if (localStorage.getItem(MIGRATION_KEY)) return;
+
+  try {
+    const raw = localStorage.getItem("dad-alpha-chat");
+    if (!raw) {
+      localStorage.setItem(MIGRATION_KEY, "1");
+      return;
+    }
+    const parsed = JSON.parse(raw);
+    const messages = parsed?.state?.messages ?? {};
+
+    for (const [agentType, msgs] of Object.entries(messages)) {
+      if (!Array.isArray(msgs)) continue;
+      for (const msg of msgs as Array<{ id: string; role: string; content: string; timestamp: string }>) {
+        await saveChatMessage({
+          id: msg.id ?? `migrated_${Date.now()}`,
+          agent_type: agentType as AgentType,
+          role: msg.role as "user" | "agent",
+          content: msg.content ?? "",
+          timestamp: msg.timestamp ?? new Date().toISOString(),
+        });
+      }
+    }
+  } catch {
+    // Migration failure is non-fatal; user loses old chat history
+  }
+
+  localStorage.setItem(MIGRATION_KEY, "1");
+}

@@ -10,6 +10,9 @@ out/
 # env
 .env*.local
 
+# one-time Stripe test→live migration output (contains IDs; do not commit)
+scripts/stripe-migration-mapping.json
+
 # misc
 .DS_Store
 *.pem

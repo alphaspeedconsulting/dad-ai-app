@@ -1,26 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuthStore } from "@/stores/auth-store";
 import { EmptyState } from "@/components/shared/EmptyState";
+import * as api from "@/lib/api-client";
+import type { Checklist } from "@/types/api-contracts";
 
-interface ChecklistItem {
-  id: string;
-  text: string;
-  checked: boolean;
-}
-
-interface Checklist {
-  id: string;
-  title: string;
-  items: ChecklistItem[];
-  createdAt: string;
-}
+const isMockMode = process.env.NEXT_PUBLIC_MOCK_MODE === "true";
 
 const MOCK_CHECKLISTS: Checklist[] = [
   {
     id: "cl1",
+    household_id: "",
     title: "Soccer Game Gear",
+    activity_type: "sports",
     items: [
       { id: "i1", text: "Soccer cleats", checked: true },
       { id: "i2", text: "Shin guards", checked: true },
@@ -28,11 +21,14 @@ const MOCK_CHECKLISTS: Checklist[] = [
       { id: "i4", text: "Snacks for team", checked: false },
       { id: "i5", text: "Folding chair", checked: false },
     ],
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    updated_at: new Date(Date.now() - 86400000).toISOString(),
   },
   {
     id: "cl2",
+    household_id: "",
     title: "Weekend Camping Trip",
+    activity_type: "camping",
     items: [
       { id: "i6", text: "Tent", checked: false },
       { id: "i7", text: "Sleeping bags (x3)", checked: false },
@@ -41,35 +37,57 @@ const MOCK_CHECKLISTS: Checklist[] = [
       { id: "i10", text: "Marshmallows", checked: false },
       { id: "i11", text: "Bug spray", checked: false },
     ],
-    createdAt: new Date(Date.now() - 172800000).toISOString(),
+    created_at: new Date(Date.now() - 172800000).toISOString(),
+    updated_at: new Date(Date.now() - 172800000).toISOString(),
   },
 ];
 
 export default function ChecklistsPage() {
-  const user = useAuthStore((s) => s.user);
-  const [checklists, setChecklists] = useState<Checklist[]>(MOCK_CHECKLISTS);
+  const householdId = useAuthStore((s) => s.user?.household_id);
+  const [checklists, setChecklists] = useState<Checklist[]>(isMockMode ? MOCK_CHECKLISTS : []);
+  const [isLoading, setIsLoading] = useState(!isMockMode);
   const [newActivity, setNewActivity] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const handleGenerate = () => {
-    if (!newActivity.trim()) return;
+  useEffect(() => {
+    if (isMockMode || !householdId) return;
+    api.household
+      .listChecklists(householdId)
+      .then(setChecklists)
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
+  }, [householdId]);
+
+  const handleGenerate = async () => {
+    if (!newActivity.trim() || !householdId) return;
     setIsGenerating(true);
-    // Mock generation
-    setTimeout(() => {
-      const newChecklist: Checklist = {
+    if (isMockMode) {
+      // Mock: simulate a brief delay then return a placeholder — dev only
+      await new Promise((r) => setTimeout(r, 1000));
+      const mockChecklist: Checklist = {
         id: `cl_${Date.now()}`,
+        household_id: "",
         title: newActivity.trim(),
+        activity_type: newActivity.trim().toLowerCase().replace(/\s+/g, "_"),
         items: [
-          { id: `i_${Date.now()}_1`, text: "Item 1 (AI generated)", checked: false },
-          { id: `i_${Date.now()}_2`, text: "Item 2 (AI generated)", checked: false },
-          { id: `i_${Date.now()}_3`, text: "Item 3 (AI generated)", checked: false },
+          { id: `i_${Date.now()}_1`, text: "Item 1 (mock)", checked: false },
+          { id: `i_${Date.now()}_2`, text: "Item 2 (mock)", checked: false },
+          { id: `i_${Date.now()}_3`, text: "Item 3 (mock)", checked: false },
         ],
-        createdAt: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       };
-      setChecklists((prev) => [newChecklist, ...prev]);
-      setNewActivity("");
-      setIsGenerating(false);
-    }, 1000);
+      setChecklists((prev) => [mockChecklist, ...prev]);
+    } else {
+      try {
+        const generated = await api.household.generateChecklist(householdId, newActivity.trim());
+        setChecklists((prev) => [generated, ...prev]);
+      } catch {
+        // Silently no-op; no toast system yet
+      }
+    }
+    setNewActivity("");
+    setIsGenerating(false);
   };
 
   const toggleItem = (checklistId: string, itemId: string) => {
@@ -124,14 +142,22 @@ export default function ChecklistsPage() {
           </div>
         </div>
 
+        {/* Loading state */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <span className="w-6 h-6 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+
         {/* Checklist cards */}
-        {checklists.length === 0 ? (
+        {!isLoading && checklists.length === 0 ? (
           <EmptyState
             icon="checklist"
             title="No checklists yet"
             description="Generate your first checklist by entering an activity above."
           />
         ) : (
+          !isLoading &&
           checklists.map((cl) => {
             const done = cl.items.filter((i) => i.checked).length;
             return (
@@ -148,7 +174,7 @@ export default function ChecklistsPage() {
                 <div className="h-1.5 bg-surface-container rounded-full mb-3 overflow-hidden">
                   <div
                     className="h-full bg-brand rounded-full transition-all"
-                    style={{ width: `${(done / cl.items.length) * 100}%` }}
+                    style={{ width: `${cl.items.length > 0 ? (done / cl.items.length) * 100 : 0}%` }}
                   />
                 </div>
                 <div className="space-y-1.5">

@@ -14,6 +14,24 @@ import type { AgentType, QuickAction } from "@/types/api-contracts";
 
 const isMockMode = process.env.NEXT_PUBLIC_MOCK_MODE === "true";
 
+/**
+ * Quick action strings that have explicit handlers in handleQuickAction.
+ * All other action strings fall through to sendMessage (chat fallback) — this is intentional.
+ * Note: `reschedule_event` carries a payload.event_id that is silently dropped in the fallback;
+ * add an explicit handler here when the reschedule API endpoint is available.
+ */
+export const HANDLED_QUICK_ACTIONS = new Set([
+  "sign_slip",
+  "create_event",
+  "add_to_list",
+  "sync_google",
+  "upload_receipt",
+  "view_budget",
+  "view_conflicts",
+  "toggle_item",
+  "view_expenses",
+]);
+
 const MOCK_AGENTS = [
   { agent_type: "calendar_whiz" as AgentType, name: "Schedule Sync", icon: "calendar_month", description: "Manages family schedules and detects conflicts." },
   { agent_type: "school_event_hub" as AgentType, name: "School Hub", icon: "school", description: "Scans school emails and tracks permission slips." },
@@ -24,7 +42,7 @@ const MOCK_AGENTS = [
 export function AgentChatClient({ agentType }: { agentType: AgentType }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { messages, isTyping, sendMessage, clearChat } = useChatStore();
+  const { messages, isTyping, sendMessage, clearChat, loadHistory } = useChatStore();
   const { agents, fetchAgents } = useAgentsStore();
   const householdId = useAuthStore((s) => s.user?.household_id);
   const tier = useAuthStore((s) => s.user?.tier);
@@ -49,6 +67,11 @@ export function AgentChatClient({ agentType }: { agentType: AgentType }) {
     if (agents.length === 0 && !isMockMode) fetchAgents();
   }, [agents.length, fetchAgents]);
 
+  useEffect(() => {
+    if (!isMockMode) loadHistory(agentType);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agentType]);
+
   // Handle ?context= query param from household-ops and other deep links
   useEffect(() => {
     if (contextHandledRef.current) return;
@@ -68,6 +91,9 @@ export function AgentChatClient({ agentType }: { agentType: AgentType }) {
       trip: {
         calendar_whiz: `Help me plan dates for trip ${id ?? ""}`.trim(),
         budget_buddy: `What's the budget for trip ${id ?? ""}?`.trim(),
+      },
+      routine: {
+        calendar_whiz: `Help me review and schedule the routine ${id ?? ""}`.trim(),
       },
     };
 

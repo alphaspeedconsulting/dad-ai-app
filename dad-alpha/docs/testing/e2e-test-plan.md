@@ -227,8 +227,10 @@ Links from household-ops and other pages pass `?context=` query params. When pre
 → Switch to "Home" tab → Add project → Filter by "Planned"
 → Switch to "Trips" tab → Add trip → See date range
 → Switch to "Routines" tab → Create routine
+→ Tap agent cross-link on a vehicle → /chat/calendar_whiz?context=vehicle:123
+→ Chat auto-sends contextual opening message about the vehicle
 ```
-**Verify:** Stats update in real-time. Filter pills show counts. Empty states show when no items.
+**Verify:** Stats update in real-time. Filter pills show counts. Empty states show when no items. Agent cross-links pass `?context=` query params and the chat page auto-sends the contextual opening message without user action.
 
 ### Flow 5: Expense Tracking
 ```
@@ -261,7 +263,7 @@ Links from household-ops and other pages pass `?context=` query params. When pre
 Set NEXT_PUBLIC_MOCK_MODE=true
 → /login → Mock login succeeds with mock user
 → /dashboard → Mock data displayed
-→ /chat/calendar_whiz → Send message → Mock response with markdown table + quick actions
+→ /chat/calendar_whiz → Send message → Keyword-matched mock response with markdown table + quick actions
 → /household-ops → Mock vehicles, projects, trips, routines loaded
 → All features functional without backend
 ```
@@ -488,8 +490,8 @@ curl -s -o /dev/null -w "%{http_code}" https://dad.alphaspeedai.com/_next/static
 - [ ] Agent grid shows all 4 agents with icons and descriptions
 - [ ] Pricing section renders tier cards
 - [ ] Email signup works — user created, JWT stored, redirect to dashboard
-- [ ] Google OAuth login works — popup opens, token returned
-- [ ] Consent flow displays ToS, Privacy, AI disclosure — all accepted
+- [ ] Google OAuth login works — popup opens, token returned (button disabled with hint when `GOOGLE_CLIENT_ID` not set)
+- [ ] Consent flow displays ToS, Privacy, AI disclosure — all accepted, `consentApi.accept()` called with proper ConsentRequest
 - [ ] `parent_brand: "dad"` confirmed in auth request (Network tab)
 
 **Dashboard:**
